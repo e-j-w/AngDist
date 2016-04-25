@@ -1,0 +1,1980 @@
+C*****************************************************************************
+	REAL*8 FUNCTION POL()
+C*****************************************************************************
+	IMPLICIT NONE
+	INCLUDE 'PDCO.DEF'
+
+	REAL*8	W
+	REAL*8  WPARA,WPERP
+
+	IF(IND.NE.1.AND.IND.NE.2) GOTO 200
+
+	IF(IND.EQ.1)THEN
+         PS1=0.
+         WPARA=W()
+         PS1=90.
+         WPERP=W()
+         ENDIF
+ 	
+         IF(IND.EQ.2)THEN
+         PS2=0.
+         WPARA=W()
+         PS2=90.
+         WPERP=W()
+         ENDIF
+ 
+ 	POL=(WPARA-WPERP)/(WPARA+WPERP)
+
+C 	WRITE(1,60)'WPARA=',WPARA,'WPERP=',WPERP
+
+ 200	CONTINUE
+
+	END
+C*****************************************************************************
+	REAL*8 FUNCTION RDCO()
+C*****************************************************************************
+	IMPLICIT NONE
+	INCLUDE 'PDCO.DEF'
+
+
+	REAL*8	W
+	REAL*8  W1,W2
+	REAL*8	STORE_Q1,STORE_Q2,STORE_TH1,STORE_TH2
+
+	STORE_Q1=Q1
+	STORE_Q2=Q2
+	STORE_TH1=TH1
+	STORE_TH2=TH2
+
+	Q1=0.
+	Q2=0.	
+	
+	W1=W()
+
+	TH1=STORE_TH2
+	TH2=STORE_TH1
+	
+	W2=W()
+
+	TH1=STORE_TH1
+	TH2=STORE_TH2
+	Q1=STORE_Q1
+	Q2=STORE_Q2
+
+	RDCO=W1/W2
+	END
+
+C*****************************************************************************
+	SUBROUTINE PDCO_INIT
+C*****************************************************************************
+
+ 	IMPLICIT NONE
+	INCLUDE  'PDCO.DEF'
+
+	CALL READ_CASC
+	CALL CALC_TENS
+
+	END
+C*****************************************************************************
+	SUBROUTINE DCO_INIT
+C*****************************************************************************
+
+ 	IMPLICIT NONE
+	INCLUDE  'PDCO.DEF'
+
+	CALL READ_CASC_DCO
+	CALL CALC_TENS_DCO
+
+	END
+
+C*****************************************************************************
+	REAL*8 FUNCTION W()
+C*****************************************************************************
+
+	IMPLICIT NONE
+       
+	INCLUDE 'PDCO.DEF'
+
+C	DEKLARACJE FUNKCJI
+	REAL*8          NN
+	INTEGER	        FAZA
+
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+	REAL*8          SLB,SLB0,SLB1
+        INTEGER         LBL,LBU,LBI,LB0U,LB1U,LB0I,LB1I
+	REAL*8		UNOBS	
+
+
+
+C	GRANICE SUMOWANIA PO LAMBDA0
+C	DOLNA 0
+C	GORNA	2*Ii1   DLA LB0 CALKOWITYCH
+C		2*Ii1-1 DLA LB0 POLOWKOWYCH
+
+
+	LB0U=INT(2*II1) 	
+C       WRITE(*,*)'LB0U=',LB0U
+	IF(FAZA(LB0U).EQ.-1) THEN 
+	LB0U=INT(2.*II1-1.)
+	ELSE
+	LB0U=INT(2.*II1)
+	ENDIF
+  	
+C	PRZYBLIZENIE DWOCH NAJNIZSZYCH MULTIPOLOWOSCI 
+	LB0U=MIN(LB0U,8)
+
+C	WRITE(*,*)'GORNA GRANICA SUMOWANIA PO LB0=',LB0U
+
+C	GRANICE SUMOWANIA PO LAMBDA1
+C	DOLNA 0
+C	GORNA	2*Ii2   DLA LB0 CALKOWITYCH
+C		2*Ii2-1 DLA LB0 POLOWKOWYCH
+
+
+	LB1U=INT(2*II2) 	
+C       WRITE(*,*)'LB1U=',LB1U
+	IF(FAZA(LB1U).EQ.-1) THEN 
+	LB1U=INT(2.*II2-1.)
+	ELSE
+	LB1U=INT(2.*II2)
+	ENDIF
+
+C	PRZYBLIZENIE DWOCH NAJNIZSZYCH MULTIPOLOWOSCI 
+	LB1U=MIN(LB1U,4)
+
+C	WRITE(*,*)'GORNA GRANICA SUMOWANIA PO LB1=',LB1U
+
+
+
+C	SUMOWANIE PO LB0 DO LINII 400
+	SLB0=0.
+	DO 400 LB0I=0,LB0U,2
+	LB0=DBLE(LB0I)
+	
+	
+	
+C	SUMOWANIE PO LAMBDA 1 DO LINII 300
+
+	        SLB1=0.
+		DO 300 LB1I=0,LB1U,2
+		LB1=DBLE(LB1I)
+
+
+C	GRANICE SUMOWANIA PO LAMBDA LBL-DOLNA LBU-GORNA
+
+		LBL=ABS(LB0-LB1)
+		LBU=LB0+LB1
+                LBU=MIN(LBU,4)
+C       WRITE(*,*)'LBL=',LBL,'LBU=',LBU
+
+C	SUMOWANIE PO LAMBDA DO LINII  200
+       	SLB=0. 
+        DO 200 LBI=LBL,LBU,1
+	IF(LBI.EQ.1) GOTO 150
+	LB=DBLE(LBI)
+	SLB=SLB+NN()
+150	CONTINUE
+C	KONIEC SUMOWANIA PO LAMBDA
+200	CONTINUE
+
+
+	IF(LB1I.EQ.0) THEN
+	UNOBS=1.
+	ELSE
+	UNOBS=U1(LB1I)
+	ENDIF
+
+	SLB1=SLB1+SLB*UNOBS
+
+C      	KONIEC SUMOWANIA PO LAMBDA1
+
+300	CONTINUE
+
+	IF(LB0I.EQ.0) THEN
+	UNOBS=1.
+	ELSE
+	UNOBS=U0(LB0I)
+	ENDIF
+
+C	WRITE(*,*)'LB0=',LB0
+C	WRITE(*,*)'SLB1=',SLB1
+	SLB0=SLB0+SLB1*UNOBS
+C	WRITE(*,*)'SLB0=',SLB0
+
+
+C	KONIEC SUMOWANIA PO LAMBDA0
+
+400	CONTINUE
+
+	W=SLB0
+
+	RETURN
+
+        END
+
+C*****************************************************************************
+	SUBROUTINE READ_CASC
+C*****************************************************************************
+
+	IMPLICIT NONE
+       
+	INCLUDE 'PDCO.DEF'
+	REAL*8 tan
+c	external tand
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+	INTEGER K,PD
+	REAL*8	DI,DD
+	
+	WRITE(*,*)' INFORMATION ABOUT THE CASCADE'
+1	WRITE(*,*)' GIVE NUMBER OF TRANSITIONS (MIN. 2, MAX. 20)'
+	READ(*,*)KU 
+	IF(KU.LT.2.OR.KU.GT.20)	GOTO 1
+
+	WRITE(*,*)'GIVE SPIN OF THE INITAL STATE AND ALIGNMENT (SIGMA/J)'
+	READ(*,*)IIU(1),SGJ
+
+	DO 100 K=1,KU,1
+
+5	WRITE(*,10)' GIVE SPIN CHANGE, PARITY CHANGE AND MIXING RATIO',
+     *  ' IN DEG. FOR THE TRANSITION NO. ',K
+10	FORMAT(A49,A30,I2)
+	READ(*,*)DI,PD,DD
+	
+	IF(ABS(DI).GT.2) THEN
+	WRITE(*,*)' TRANSITIONS WITH MAX. MULTIPOLARITY 2 ARE ALOWED ONLY'
+	GOTO 5
+	ENDIF
+
+	IFU(K)=IIU(K)-DI
+
+	IF(IFU(K).LT.0) THEN
+	WRITE(*,*)'TRANSITION NOT ALLOWED FINAL SPIN LESS', 
+     *  'THEN 0'
+	GOTO 5
+	ENDIF
+
+		IF(PD.GE.0) THEN 
+			PU(K)=1
+			ELSE
+			PU(K)=-1
+		ENDIF	
+
+	IF(ABS(DI).EQ.2)DD=90.
+	IF(DD.EQ.90.)DD=89.9999
+	IF(DD.EQ.-90.)DD=-89.9999
+	
+	DU(K)=TAN(DD*180/3.14159265359)
+
+	IF(K.EQ.KU) GOTO 100
+	IIU(K+1)=IFU(K)
+
+100	CONTINUE
+
+	WRITE(*,*)' INFORMATION ABOUT GEOMETRY ---ALL ANGLES IN DEG.---'
+	WRITE(*,*)'POLARIMETER POSITION (TH_POL)'
+	READ(*,*)THPOL
+	WRITE(*,*)'DIRECTIONAL DETECTOR POSITION (TH_DIR)'
+	READ(*,*)THDIR
+	WRITE(*,*)'ANGLE BETWEEN SCATTERING PLANES FI'
+	READ(*,*)FII
+
+
+200	RETURN
+	END
+
+C*****************************************************************************
+	SUBROUTINE READ_CASC_DCO
+C*****************************************************************************
+
+	IMPLICIT NONE
+       
+	INCLUDE 'PDCO.DEF'
+C	INCLUDE 'TRIG.DEF'
+	REAL*8 tan
+c	external tand
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+	INTEGER K,PD
+	REAL*8	DI,DD
+	
+	WRITE(*,*)' INFORMATION ABOUT THE CASCADE'
+1	WRITE(*,*)' GIVE NUMBER OF TRANSITIONS (MIN. 2, MAX. 20)'
+	READ(*,*)KU 
+	IF(KU.LT.2.OR.KU.GT.20)	GOTO 1
+
+	WRITE(*,*)'GIVE SPIN OF THE INITAL STATE AND ALIGNMENT (SIGMA/J)'
+	READ(*,*)IIU(1),SGJ
+
+	DO 100 K=1,KU,1
+
+5	WRITE(*,10)' GIVE SPIN CHANGE, PARITY CHANGE AND MIXING RATIO',
+     *  ' IN DEG. FOR THE TRANSITION NO. ',K
+10	FORMAT(A49,A30,I2)
+	READ(*,*)DI,PD,DD
+	
+	IF(ABS(DI).GT.2) THEN
+	WRITE(*,*)' TRANSITIONS WITH MAX. MULTIPOLARITY 2 ARE ALOWED ONLY'
+	GOTO 5
+	ENDIF
+
+	IFU(K)=IIU(K)-DI
+
+	IF(IFU(K).LT.0) THEN
+	WRITE(*,*)'TRANSITION NOT ALLOWED FINAL SPIN LESS', 
+     *  'THEN 0'
+	GOTO 5
+	ENDIF
+
+		IF(PD.GE.0) THEN 
+			PU(K)=1
+			ELSE
+			PU(K)=-1
+		ENDIF	
+
+	IF(ABS(DI).EQ.2)DD=90.
+	IF(DD.EQ.90.)DD=89.9999
+	IF(DD.EQ.-90.)DD=-89.9999
+	
+	DU(K)=TAN(DD*180/3.14159265359)
+
+	IF(K.EQ.KU) GOTO 100
+	IIU(K+1)=IFU(K)
+
+100	CONTINUE
+
+C	RDCO=W1/W2 
+C	IN W1 GATE IS SET ON THDIR, TRANSITION IS OBSERVED AT THPOL 
+C	IN W2 GATE IS SET ON THPOL, TRANSITION IS OBSERVED AT THDIR 
+	
+	WRITE(*,*)' INFORMATION ABOUT GEOMETRY ---ALL ANGLES IN DEG.---'
+	WRITE(*,*)'POSITION OF THE DETECTOR NUMBER 1 (THETA 1)'
+	READ(*,*)THPOL
+	WRITE(*,*)'POSITION OF THE DETECTOR NUMBER 2 (THETA 2)'
+	READ(*,*)THDIR
+	WRITE(*,*)'ANGLE BETWEEN SCATTERING PLANES FI'
+	READ(*,*)FII
+
+
+200	RETURN
+	END
+C*****************************************************************************
+	SUBROUTINE WRITE_CASC(KOUT)
+C*****************************************************************************
+
+  	IMPLICIT NONE
+	INTEGER	KOUT
+
+	INCLUDE 'PDCO.DEF'
+C	INCLUDE 'TRIG.DEF'
+	REAL*8 atan
+c	external atand
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+	INTEGER	K
+	INTEGER	NR
+	DIMENSION  NR(20)
+	DATA  NR/1,2,3,4,5,6,7,8,9,10,11,12,13,14,
+     *  15,16,17,18,19,20/
+
+
+	WRITE(KOUT,*)
+	WRITE(KOUT,*)' INFORMATION ABOUT CASCADE'
+	
+	WRITE(KOUT,*)
+	WRITE(KOUT,20)'Nr',(NR(K),K=1,MIN(KU,10))
+	WRITE(KOUT,10)'Ii',(IIU(K),K=1,MIN(KU,10))
+	WRITE(KOUT,10)'If',(IFU(K),K=1,MIN(KU,10))
+	WRITE(KOUT,20)'Parity change',(PU(K),K=1,MIN(KU,10))
+	WRITE(KOUT,10)'Mix.Rat.[deg]',(ATAN(DU(K))*180/3.14159265359,K=1,MIN(KU,10))
+
+	IF(KU.LE.10) GOTO 200
+	WRITE(KOUT,*)
+	WRITE(KOUT,20)'Nr',(NR(K),K=11,MIN(KU,20))
+	WRITE(KOUT,10)'Ii',(IIU(K),K=11,MIN(KU,20))
+	WRITE(KOUT,10)'If',(IFU(K),K=11,MIN(KU,20))
+	WRITE(KOUT,20)'Parity change',(PU(K),K=11,MIN(KU,20))
+	WRITE(KOUT,10)'Mix.Rat.[deg]',(ATAN(DU(K))*180/3.14159265359,K=11,MIN(KU,20))
+
+10	FORMAT(1x,a13,10F6.1)
+20	FORMAT(1x,a13,10I6)
+30	FORMAT(1X,A40,F6.1)
+
+200	CONTINUE
+
+	WRITE(KOUT,*)
+	IF(IND.EQ.1) WRITE(KOUT,*)' POL-DIR MODE'
+	IF(IND.EQ.2) WRITE(KOUT,*)' DIR-POL MODE'
+ 
+	RETURN
+	END
+C*****************************************************************************
+	SUBROUTINE WRITE_CASC_DCO(KOUT)
+C*****************************************************************************
+
+  	IMPLICIT NONE
+	INTEGER	KOUT
+
+	INCLUDE 'PDCO.DEF'
+C	INCLUDE 'TRIG.DEF'
+	REAL*8 atan
+c	external atand
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+	INTEGER	K
+	INTEGER	NR
+	DIMENSION  NR(20)
+	DATA  NR/1,2,3,4,5,6,7,8,9,10,11,12,13,14,
+     *  15,16,17,18,19,20/
+
+
+	WRITE(KOUT,*)
+	WRITE(KOUT,*)' INFORMATION ABOUT CASCADE'
+	
+	WRITE(KOUT,*)
+	WRITE(KOUT,20)'Nr',(NR(K),K=1,MIN(KU,10))
+	WRITE(KOUT,10)'Ii',(IIU(K),K=1,MIN(KU,10))
+	WRITE(KOUT,10)'If',(IFU(K),K=1,MIN(KU,10))
+	WRITE(KOUT,20)'Parity change',(PU(K),K=1,MIN(KU,10))
+	WRITE(KOUT,10)'Mix.Rat.[deg]',(ATAN(DU(K))*180/3.14159265359,K=1,MIN(KU,10))
+
+	IF(KU.LE.10) GOTO 200
+	WRITE(KOUT,*)
+	WRITE(KOUT,20)'Nr',(NR(K),K=11,MIN(KU,20))
+	WRITE(KOUT,10)'Ii',(IIU(K),K=11,MIN(KU,20))
+	WRITE(KOUT,10)'If',(IFU(K),K=11,MIN(KU,20))
+	WRITE(KOUT,20)'Parity change',(PU(K),K=11,MIN(KU,20))
+	WRITE(KOUT,10)'Mix.Rat.[deg]',(ATAN(DU(K))*180/3.14159265359,K=11,MIN(KU,20))
+
+10	FORMAT(1x,a13,10F6.1)
+20	FORMAT(1x,a13,10I6)
+30	FORMAT(1X,A40,F6.1)
+
+200	CONTINUE
+
+ 	RETURN
+	END
+C*****************************************************************************
+	SUBROUTINE WRITE_GEOM(KOUT)
+C*****************************************************************************
+
+  	IMPLICIT NONE
+	INTEGER	KOUT
+	
+	INCLUDE 'PDCO.DEF'
+
+	WRITE(KOUT,*)
+	WRITE(KOUT,*)'INFORMATION ABOUT GEOMETRY ---ALL ANGLES IN DEG.---'
+	WRITE(KOUT,*)
+	WRITE(KOUT,30)'POLARIMETER POSITION (TH_POL) ',THPOL
+	WRITE(KOUT,30)'DIRECTIONAL DETECTOR POSITION (TH_DIR) ',THDIR
+	WRITE(KOUT,30)'ANGLE BETWEEN SCATTERING PLANES (FI) ',FII
+	WRITE(KOUT,*)
+	WRITE(KOUT,30)'INITIAL STATE ALIGNMENT (SIGMA/J) ',SGJ
+
+30	FORMAT(1X,A40,F6.3)
+
+	RETURN
+	END
+C*****************************************************************************
+	SUBROUTINE WRITE_GEOM_DCO(KOUT)
+C*****************************************************************************
+
+  	IMPLICIT NONE
+	INTEGER	KOUT
+	
+	INCLUDE 'PDCO.DEF'
+
+	WRITE(KOUT,*)
+	WRITE(KOUT,*)'INFORMATION ABOUT GEOMETRY ---ALL ANGLES IN DEG.---'
+	WRITE(KOUT,*)
+	WRITE(KOUT,30)'POSITION OF THE DETECTOR NUMBER 1 (THETA 1) ',THPOL
+	WRITE(KOUT,30)'POSITION OF THE DETECTOR NUMBER 2 (THETA 2) ',THDIR
+	WRITE(KOUT,30)'ANGLE BETWEEN SCATTERING PLANES (FI) ',FII
+	WRITE(KOUT,*)
+	WRITE(KOUT,30)'INITIAL STATE ALIGNMENT (SIGMA/J) ',SGJ
+
+30	FORMAT(1X,A50,F6.3)
+
+	RETURN
+	END
+C*****************************************************************************
+	SUBROUTINE CALC_TENS
+C*****************************************************************************
+
+ 	IMPLICIT NONE
+	INCLUDE 'PDCO.DEF'
+
+C	DEKLARACJE FUNKCJI
+	REAL*8	U,B
+ 
+
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+	INTEGER		L1,L2,L3,K,L
+	REAL*8		LAMBDA
+
+5	WRITE(*,*)'GATE ON THE TRANSITION Nr (0 TO EXIT) >'
+	READ(*,*)ND
+	
+	IF(ND.EQ.0) THEN
+		IND=0
+		RETURN
+	ENDIF
+
+	IF(ND.EQ.-1) THEN
+	WRITE(1,*)'------------------------------------------------',
+     *  '------------'
+	GOTO 5
+	ENDIF
+
+	WRITE(*,*)'POLARIZATION OF THE TRANSITION Nr >'
+	READ(*,*)NP
+	IF(NP.EQ.ND) THEN
+	WRITE(*,*)'CANNOT CALCULATE POLARIZATION OF GATING TRANSITION'
+	GOTO 5
+	ENDIF
+
+	IF(NP.LT.ND) THEN
+		Q1=1.
+		Q2=0.	
+		II1=IIU(NP)
+		IF1=IFU(NP)
+		D1=DU(NP)
+		P1=PU(NP)
+		II2=IIU(ND)
+		IF2=IFU(ND)
+		D2=DU(ND)
+		P2=PU(ND)
+		TH1=THPOL
+		TH2=THDIR
+		IND=1
+		FI=FII
+	ELSE
+		Q1=0.
+		Q2=1.	
+		II1=IIU(ND)
+		IF1=IFU(ND)
+		D1=DU(ND)
+		P1=PU(ND)
+		II2=IIU(NP)
+		IF2=IFU(NP)
+		D2=DU(NP)
+		P2=PU(NP)
+		TH1=THDIR
+		TH2=THPOL
+		IND=2
+		FI=FII
+	ENDIF
+
+	L1=MIN(NP,ND)
+	L3=MAX(NP,ND)
+	L2=L1+1
+	L1=L1-1
+	L3=L3-1
+
+C	WRITE(*,*)'NP= ',NP,' ND= ',ND
+C	WRITE(*,*)'L1= ',L1,' L2= ',L2,' L3= ',L3
+	DO 200	LAMBDA=1.,4.
+	L=INT(LAMBDA)
+	U1(L)=1.
+	DO 150 K=L2,L3
+	U1(L)=U1(L)*U(LAMBDA,IIU(K),IFU(K),DU(K))
+150	CONTINUE
+200	CONTINUE
+
+	DO 300	LAMBDA=1.,8.
+	L=INT(LAMBDA)
+	U0(L)=B(LAMBDA,IIU(1),SGJ)
+	DO 250 K=1,L1
+	U0(L)=U0(L)*U(LAMBDA,IIU(K),IFU(K),DU(K))
+250	CONTINUE
+300	CONTINUE
+
+
+	RETURN
+	END
+C*****************************************************************************
+	SUBROUTINE CALC_TENS_DCO
+C*****************************************************************************
+
+ 	IMPLICIT NONE
+	INCLUDE 'PDCO.DEF'
+
+C	DEKLARACJE FUNKCJI
+	REAL*8	U,B
+ 
+
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+	INTEGER		L1,L2,L3,K,L
+	REAL*8		LAMBDA
+
+
+5	WRITE(*,*)'GATE ON THE TRANSITION Nr (0 TO EXIT) >'
+	READ(*,*)ND
+	
+	IF(ND.EQ.0) THEN
+		IND=0
+		RETURN
+	ENDIF
+
+	IF(ND.EQ.-1) THEN
+	WRITE(1,*)'------------------------------------------------',
+     *  '------------'
+	GOTO 5
+	ENDIF
+
+	WRITE(*,*)'OBSERVATION OF THE TRANSITION Nr >'
+	READ(*,*)NP
+	IF(NP.EQ.ND) THEN
+	WRITE(*,*)'CANNOT CALCULATE RDCO FOR GATING TRANSITION'
+	GOTO 5
+	ENDIF
+
+	IF(NP.LT.ND) THEN
+		Q1=1.
+		Q2=0.	
+		II1=IIU(NP)
+		IF1=IFU(NP)
+		D1=DU(NP)
+		P1=PU(NP)
+		II2=IIU(ND)
+		IF2=IFU(ND)
+		D2=DU(ND)
+		P2=PU(ND)
+		TH1=THPOL
+		TH2=THDIR
+		IND=1
+		FI=FII
+	ELSE
+		Q1=0.
+		Q2=1.	
+		II1=IIU(ND)
+		IF1=IFU(ND)
+		D1=DU(ND)
+		P1=PU(ND)
+		II2=IIU(NP)
+		IF2=IFU(NP)
+		D2=DU(NP)
+		P2=PU(NP)
+		TH1=THDIR
+		TH2=THPOL
+		IND=2
+		FI=FII
+	ENDIF
+
+	L1=MIN(NP,ND)
+	L3=MAX(NP,ND)
+	L2=L1+1
+	L1=L1-1
+	L3=L3-1
+
+C	WRITE(*,*)'NP= ',NP,' ND= ',ND
+C	WRITE(*,*)'L1= ',L1,' L2= ',L2,' L3= ',L3
+	DO 200	LAMBDA=1.,4.
+	L=INT(LAMBDA)
+	U1(L)=1.
+	DO 150 K=L2,L3
+	U1(L)=U1(L)*U(LAMBDA,IIU(K),IFU(K),DU(K))
+150	CONTINUE
+200	CONTINUE
+
+	DO 300	LAMBDA=1.,8.
+	L=INT(LAMBDA)
+	U0(L)=B(LAMBDA,IIU(1),SGJ)
+	DO 250 K=1,L1
+	U0(L)=U0(L)*U(LAMBDA,IIU(K),IFU(K),DU(K))
+250	CONTINUE
+300	CONTINUE
+
+
+	RETURN
+	END
+
+
+C*****************************************************************************
+	REAL*8 FUNCTION NN()
+C*****************************************************************************
+
+	IMPLICIT NONE
+	INCLUDE 'PDCO.DEF'
+C	DEKLARACJE FUNKCJI
+        REAL*8          A0,A2
+        INTEGER         FAZA
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+
+	REAL*8          W1,W2,W3,W4
+	REAL*8          A01,A02,A21,A22
+	REAL*8          ANG1,ANG2,ANG3,ANG4
+        REAL*8          PL
+
+	REAL*8          ZERO
+C	REAL*8          ONE,MONE,TWO,MTWO,HALF,MHALF
+	DATA            ZERO/0./
+C	DATA            ONE/1./,MONE/-1./,TWO/2./,MTWO/-2./
+C	DATA		HALF/0.5/MHALF/-0.5/
+
+
+	PL=0.5*(1.+FAZA(INT(LB)))
+	CALL ANG(ANG1,ANG2,ANG3,ANG4)
+	
+C	TO MUSI BYC OBLICZONE ZAWSZE
+	A01=A0(LB1,LB0,LB,IF1,II1,D1)
+	A02=A0(ZERO,LB1,LB1,IF2,II2,D2)
+
+C	TO  TYLKO JESLI Q1 ROZNE OD 0
+	IF(Q1.NE.0.) THEN  
+		A21=A2(LB1,LB0,LB,IF1,II1,P1,D1)
+	ELSE
+		A21=0.
+        ENDIF
+
+C	TO TYLKO JESLI Q2 ROZNE OD 0
+
+	IF(Q2.NE.0.)THEN
+		A22=A2(ZERO,LB1,LB1,IF2,II2,P2,D2)
+	ELSE
+		A22=0.
+        ENDIF
+
+
+	IF(PL.EQ.0.) THEN
+		W1=0
+	ELSE
+		W1=A01*A02*ANG1
+	ENDIF
+
+	IF(Q1.EQ.0.)THEN
+	W2=0.0
+	ELSE
+	W2=0.5*Q1*A21*A02*ANG2
+	ENDIF
+	
+	IF((Q2.EQ.0.).OR.(PL.EQ.0.))THEN
+		W3=0.0
+	ELSE
+		W3=0.5*Q2*A01*A22*ANG3
+	ENDIF
+
+
+	IF((Q1.EQ.0.).OR.(Q2.EQ.0.)) THEN
+		W4=0.0
+	ELSE
+		W4=0.25*Q1*Q2*A21*A22*ANG4
+	ENDIF
+
+	
+	NN=W1-W2-W3+W4
+	RETURN
+	END
+
+C*****************************************************************************
+	REAL*8 FUNCTION A0(LB1,LB0,LB,IF,II,D)
+C*****************************************************************************
+
+	IMPLICIT NONE
+
+	REAL*8          ZERO,ONE,TWO
+C	REAL*8          MONE,MTWO,HALF,MHALF
+
+C	DEKLARACJE FUNKCJI
+	REAL*8		F3
+	INTEGER 	FAZA
+
+C	DEKLARACJE ZMIENNYCH GLOBALNYCH
+	REAL*8 		D
+	REAL*8 		IF,II
+
+C	NIE MOZE BYC DOSTEPU DO WSKAZNIKOW SUMOWANIA PRZEZ COMMON
+C	BO BYWAJA ROZNE PODSTAWIENIA PATRZ UZYCIE A0 W NN
+
+	REAL*8 		LB1,LB0,LB
+	
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+        REAL*8 		A,B,C
+	INTEGER 	K
+
+	DATA            ZERO/0./,ONE/1./,TWO/2./
+C	DATA            MONE/-1./,MTWO/-2./
+C	DATA		HALF/0.5/MHALF/-0.5/
+
+C	JESLI ROZNICA SPINOW WIEKSZA OD 1 TO NIE MA DIPOLI
+	IF(ABS(IF-II).GT.1.1)THEN
+		A0=F3(LB1,LB0,LB,TWO,TWO,IF,II)
+	        RETURN
+	ENDIF
+
+C	JESLI IF=0 A II=1 TO NIE MA KWADRUPOLA
+	IF(IF.EQ.0..AND.II.EQ.1.)THEN
+		A0=F3(LB1,LB0,LB,ONE,ONE,ZERO,ONE)
+	        RETURN
+	ENDIF
+
+	IF(D.EQ.0)THEN
+		A0=F3(LB1,LB0,LB,ONE,ONE,IF,II)
+		RETURN
+	ENDIF
+
+	IF(ABS(D).GT.1000.)THEN
+		A0=F3(LB1,LB0,LB,TWO,TWO,IF,II)
+	        RETURN
+	ENDIF
+
+	A=F3(LB1,LB0,LB,ONE,ONE,IF,II)
+	B=F3(LB1,LB0,LB,ONE,TWO,IF,II)
+	C=F3(LB1,LB0,LB,TWO,TWO,IF,II)
+
+	K=INT(LB1+LB0+LB)
+	K=1+FAZA(K)
+	A0=(A+K*D*B+D*D*C)/(1.+D*D)
+	
+	RETURN
+	END
+C*****************************************************************************
+	REAL*8 FUNCTION A2(LB1,LB0,LB,IF,II,P,D)
+C*****************************************************************************
+
+	IMPLICIT NONE
+
+
+C	DEKLARACJE FUNKCJI
+	REAL*8        F3,H
+	INTEGER       FAZA
+
+C	DEKLARACJE ZMIENNYCH GLOBALNYCH
+	REAL*8        D
+	REAL*8        IF,II
+
+C	NIE MOZE BYC DOSTEPU DO WSKAZNIKOW SUMOWANIA PRZEZ COMMON
+C	BO BYWAJA ROZNE PODSTAWIENIA PATRZ UZYCIE A0 W NN
+	REAL*8        LB1,LB0,LB
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH		
+        REAL*8        X
+	REAL*8        F
+	INTEGER       P,K
+
+	REAL*8          ZERO,ONE,TWO
+	DATA            ZERO/0./,ONE/1./,TWO/2./
+
+	IF(P.EQ.1) F=-1.
+	IF(P.EQ.-1) F=1.
+
+C	JESLI ROZNICA SPINOW WIEKSZA NIZ 1 TO NIE MA DIPOLI
+	IF(ABS(IF-II).GT.1.1)THEN
+		X=-H(LB,TWO,TWO)*F3(LB1,LB0,LB,TWO,TWO,IF,II)
+		A2=F*X
+		RETURN
+	ENDIF
+
+C	JESLI IF=0 A II=1 TO NIE MA KWADRUPOLA
+	IF(IF.EQ.0..AND.II.EQ.1.)THEN
+		X=-H(LB,TWO,TWO)*F3(LB1,LB0,LB,ONE,ONE,ZERO,ONE)
+		A2=F*X
+		RETURN
+	ENDIF
+
+        IF(D.EQ.0) THEN
+		X=H(LB,ONE,ONE)*F3(LB1,LB0,LB,ONE,ONE,IF,II)
+		A2=F*X
+		RETURN
+	ENDIF
+	
+	IF(ABS(D).GT.1000.)THEN
+		X=-H(LB,TWO,TWO)*F3(LB1,LB0,LB,TWO,TWO,IF,II)
+		A2=F*X
+		RETURN
+	ENDIF
+	
+	K=INT(LB0+LB1)
+	K=1+FAZA(K)
+	X=H(LB,ONE,ONE)*F3(LB1,LB0,LB,ONE,ONE,IF,II)
+	X=X-K*D*H(LB,ONE,TWO)*F3(LB1,LB0,LB,ONE,TWO,IF,II)
+	X=X-D*D*H(LB,TWO,TWO)*F3(LB1,LB0,LB,TWO,TWO,IF,II)
+	A2=F*X/(1+D*D)
+	
+	RETURN
+	END
+
+C*****************************************************************************
+	SUBROUTINE ANG(ANG1,ANG2,ANG3,ANG4)
+C*****************************************************************************
+	IMPLICIT NONE
+
+C	INCLUDE 'TRIG.DEF'
+
+	REAL*8 COS
+c	EXTERNAL COSD
+
+C	DEKLARACJE FUNKCJI
+	REAL*8 	        DDJMNB,DCLEBG
+        INTEGER         FAZA
+
+C	DEKLARACJE ZMIENNYCH GLOBALNYCH I BLOKOW COMMON	
+	REAL*8          ANG1,ANG2,ANG3,ANG4
+  	REAL*8          LB1,LB0,LB
+	COMMON /LAMBDA/ LB1,LB0,LB
+	REAL*8          TH1,TH2,PS1,PS2,FI,Q1,Q2
+	COMMON/GEOMETRY/TH1,TH2,PS1,PS2,FI,Q1,Q2 
+
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+	REAL*8          D01,D02,D21,D22,DM21,DM22
+	REAL*8		X,Y
+        REAL*8          MU,M
+	INTEGER		LLB
+
+	REAL*8          ZERO,TWO,MTWO
+	DATA            ZERO/0./,TWO/2./,MTWO/-2./
+
+	
+
+	MU=MIN(LB1,LB)
+C	WRITE(*,*)'GORNA GRANICA SUMOWANIA PO M= ',MU
+	ANG1=0.
+	ANG2=0.
+	ANG3=0.
+	ANG4=0.
+	LLB=INT(LB)
+
+
+C	SUMOWANIE PO M DO LINII 100
+
+	DO 100 M=0.,MU
+
+	Y=DCLEBG(LB0,LB1,LB,ZERO,M,M)
+	IF(M.EQ.0.)Y=0.5*Y
+
+	D01=DDJMNB(LB,M,ZERO,TH1)
+	D02=DDJMNB(LB1,M,ZERO,TH2)
+
+C	TO  TYLKO JESLI Q1 ROZNE OD 0
+	IF(Q1.NE.0.) THEN  
+		D21=DDJMNB(LB,M,TWO,TH1)
+       		DM21=DDJMNB(LB,M,MTWO,TH1)
+	ELSE
+		D21=0.
+		DM21=0.
+        ENDIF
+
+C	TO TYLKO JESLI Q2 ROZNE OD 0
+	IF(Q2.NE.0.)THEN
+		D22=DDJMNB(LB1,M,TWO,TH2)
+		DM22=DDJMNB(LB1,M,MTWO,TH2)
+        ELSE
+		D22=0.
+		DM22=0.
+	ENDIF
+
+
+
+	ANG1=ANG1+Y*D01*D02*COS(M*FI*180/3.14159265359)
+
+	IF(Q1.NE.0.)THEN
+		X=D21*COS((M*FI+2.*PS1)*180/3.14159265359)
+	        X=X+FAZA(LLB)*DM21*COS((M*FI-2.*PS1)*180/3.14159265359)
+		X=X*D02
+		ANG2=ANG2+Y*X
+	ENDIF
+	
+	IF(Q2.NE.0.)THEN
+		X=D22*COS((M*FI-2.*PS2)*180/3.14159265359)
+		X=X+DM22*COS((M*FI+2.*PS2)*180/3.14159265359)
+		X=X*D01
+		ANG3=ANG3+Y*X
+	ENDIF
+
+	IF((Q1.NE.0.).AND.(Q2.NE.0.)) THEN
+		X=D21*D22*COS((M*FI+2.*PS1-2.*PS2)*180/3.14159265359)
+		X=X+D21*DM22*COS((M*FI+2.*PS1+2.*PS2)*180/3.14159265359)
+		X=X+FAZA(LLB)*DM21*DM22*COS((M*FI-2.*PS1+2.*PS2)*180/3.14159265359)
+ 	     	X=X+FAZA(LLB)*DM21*D22*COS((M*FI-2.*PS1-2.*PS2)*180/3.14159265359)
+		ANG4=ANG4+Y*X
+	ENDIF
+100	CONTINUE
+
+	RETURN
+	END
+C*****************************************************************************
+	REAL*8 FUNCTION H(LB,L,L1)
+C*****************************************************************************
+
+	IMPLICIT NONE
+
+C	DEKLARACJE FUNKCJI
+        REAL*8		DCLEBG
+
+C	DEKLARACJE ZMIENNYCH GLOBALNYCH I BLOKOW COMMON
+	REAL*8 		LB
+	REAL*8 		L,L1	
+	INTEGER 	IERR,IERCT
+	COMMON/FGERCM/ 	IERR,IERCT
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH 
+	REAL*8 		C1,C2
+
+	REAL*8          ZERO,ONE,MONE,MTWO
+	DATA            ZERO/0./,ONE/1./,MONE/-1./,MTWO/-2./
+
+	C1=DCLEBG(L,L1,LB,MONE,MONE,MTWO)
+	C2=DCLEBG(L,L1,LB,MONE,ONE,ZERO)
+	
+	IF(C2.EQ.0.) THEN
+	H=0.
+	ELSE
+	H=C1/C2	
+        ENDIF
+
+	RETURN
+	END
+C*****************************************************************************
+	REAL*8 FUNCTION B(LB,I,SGJ)
+C*****************************************************************************
+
+C	CALCULATES THE STATISTICAL TENSOR
+
+	IMPLICIT NONE
+
+
+C	Declare functions
+	REAL*8		DCLEBG
+	INTEGER 	FAZA
+
+C	DEKLARACJE ZMIENNYCH GLOBALNYCH I BLOKOW COMMON
+	REAL*8 		I
+	REAL*8		LB,M,M1
+	REAL*8		SGJ
+	INTEGER 	IERR,IERCT
+	COMMON/FGERCM/ 	IERR,IERCT
+
+C	Declare local variables
+	REAL*8		SIGMA,NORM,SUM,E
+	INTEGER 	F,P
+
+	REAL*8          ZERO,HALF,MHALF
+	DATA            ZERO/0./,HALF/0.5/,MHALF/-0.5/
+
+
+	P=INT(2.*I)	
+	P=FAZA(P)
+
+	IF(SGJ.EQ.0.AND.P.EQ.1) THEN
+	NORM=1.
+	F=I
+	F=FAZA(F)
+	SUM=F*DCLEBG(I,I,LB,ZERO,ZERO,ZERO)
+        ENDIF
+
+	IF(SGJ.EQ.0.AND.P.EQ.-1) THEN
+	NORM=2.
+	F=INT(I+0.5)
+	SUM=FAZA(F)*DCLEBG(I,I,LB,MHALF,HALF,ZERO)
+	F=INT(I-0.5)
+	SUM=SUM+FAZA(F)*DCLEBG(I,I,LB,HALF,MHALF,ZERO)
+	WRITE(*,1000)
+1000	FORMAT(' SIGMA=0 FOR HALF SPINS MEANS P(M=1/2)=P(M=-1/2)=1/2 ')
+        ENDIF
+
+	IF(SGJ.NE.0.) THEN
+
+C	GRANICE SUMOWANIA
+	SIGMA=SGJ*I
+
+	SUM=0.
+	NORM=0.
+	
+	DO 100 M=-I,I
+	F=I+M
+	F=FAZA(F)
+        E=EXP(-M*M/2./SIGMA/SIGMA)
+	M1=-M
+	NORM=NORM+E
+	SUM=SUM+F*DCLEBG(I,I,LB,M1,M,ZERO)*E
+
+100	CONTINUE
+
+	ENDIF
+
+	B=SQRT(2.*I+1)*SUM/NORM
+
+	RETURN
+	END
+C*****************************************************************************
+	REAL*8 FUNCTION F3(LB1,LB0,LB,L,L1,IF,II)
+C*****************************************************************************
+
+	IMPLICIT NONE
+
+C	DEKLARACJE FUNKCJI
+	REAL*8 		F1
+        REAL*8		DWIG3J,DWIG9J,DK
+	INTEGER 	FAZA
+C	DEKLARACJE ZMIENNYCH GLOBALNYCH I BLOKOW COMMON
+	REAL*8 		IF,II
+	REAL*8 		LB1,LB0,LB
+	REAL*8 		L,L1
+	INTEGER 	IERR,IERCT
+	COMMON/FGERCM/ 	IERR,IERCT
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH	
+	REAL*8		NORM,FAKT
+	INTEGER 	F		
+
+	REAL*8          ZERO,ONE,MONE
+	DATA            ZERO/0./,ONE/1./,MONE/-1./
+
+
+	IF(LB1.EQ.0) THEN
+	F3=DK(LB0,LB)*F1(LB,L,L1,IF,II)
+	RETURN
+	ELSE
+	CONTINUE
+	ENDIF
+	
+
+        F=L1+LB1+LB0+1
+        F=FAZA(F)
+	
+
+        NORM=(2.*II+1.)
+	NORM=NORM*(2.*IF+1.)
+	NORM=NORM*(2.*L+1.)
+	NORM=NORM*(2.*L1+1.)
+	NORM=NORM*(2.*LB0+1.)
+	NORM=NORM*(2.*LB1+1.)
+ 	NORM=NORM*(2.*LB+1.)
+	NORM=SQRT(NORM)
+
+	FAKT=DWIG3J(L,L1,LB,ONE,MONE,ZERO)
+
+	FAKT=FAKT*DWIG9J(IF,L,II,IF,L1,II,LB1,LB,LB0)
+	
+	F3=F*NORM*FAKT
+	RETURN
+	END
+C*****************************************************************************
+	REAL*8 FUNCTION F1(LB,L,L1,IF,II)
+C*****************************************************************************
+	IMPLICIT NONE
+
+C	Declare functions
+	REAL*8       DWIG3J,DWIG6J
+	INTEGER      FAZA	
+
+C	Declare global variables
+	REAL*8       IF,II
+	REAL*8       LB,L,L1
+
+C	Declare local variables
+	REAL*8       NORM,J3,J6
+	INTEGER      F
+
+	REAL*8          ZERO,ONE,MONE
+	DATA            ZERO/0./,ONE/1./,MONE/-1./
+
+	F=IF+II-1
+	F=FAZA(F)
+	NORM=(2.*LB+1.)*(2.*L+1.)*(2.*L1+1.)*(2.*II+1.)
+	NORM=SQRT(NORM)
+	J3=DWIG3J(L,L1,LB,ONE,MONE,ZERO)
+	J6=DWIG6J(L,L1,LB,II,II,IF)
+
+	F1=F*NORM*J3*J6
+
+
+	RETURN
+	END
+C*****************************************************************************
+	REAL*8 FUNCTION U(LB,II,IF,D)
+C*****************************************************************************
+
+	IMPLICIT NONE
+
+C	DEKLARACJE FUNKCJI
+        REAL*8		DWIG6J
+	INTEGER 	FAZA
+C	DEKLARACJE ZMIENNYCH GLOBALNYCH I BLOKOW COMMON
+	REAL*8 		II,IF,D
+	REAL*8 		LB
+	INTEGER 	IERR,IERCT
+	COMMON/FGERCM/ 	IERR,IERCT
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH	
+	REAL*8		NORM,FAKT,U1,U2
+	INTEGER 	F		
+
+	REAL*8          ONE,TWO
+	DATA            ONE/1./,TWO/2./
+
+C	JESLI IF=0 A II=1 TO NIE MA KWADRUPOLA
+
+	IF(IF.EQ.0..AND.II.EQ.1.)THEN
+        F=II+IF+LB+1
+        F=FAZA(F)
+	
+        NORM=(2.*II+1.)
+	NORM=NORM*(2.*IF+1.)
+	NORM=SQRT(NORM)
+
+	FAKT=DWIG6J(II,II,LB,IF,IF,ONE)
+	U=F*NORM*FAKT
+	RETURN
+	ENDIF
+
+	IF(ABS(D).GT.1000.OR.(II-IF).GT.1.1) THEN
+        F=II+IF+LB+2
+        F=FAZA(F)
+	
+        NORM=(2.*II+1.)
+	NORM=NORM*(2.*IF+1.)
+	NORM=SQRT(NORM)
+
+	FAKT=DWIG6J(II,II,LB,IF,IF,TWO)
+	U=F*NORM*FAKT
+	RETURN
+	ENDIF
+
+
+	IF(D.EQ.0) THEN
+
+        F=II+IF+LB+1
+        F=FAZA(F)
+	
+        NORM=(2.*II+1.)
+	NORM=NORM*(2.*IF+1.)
+	NORM=SQRT(NORM)
+
+	FAKT=DWIG6J(II,II,LB,IF,IF,ONE)
+	U=F*NORM*FAKT
+	RETURN
+	ENDIF
+
+
+        F=II+IF+LB+1
+        F=FAZA(F)
+	
+        NORM=(2.*II+1.)
+	NORM=NORM*(2.*IF+1.)
+	NORM=SQRT(NORM)
+
+	FAKT=DWIG6J(II,II,LB,IF,IF,ONE)
+	U1=F*NORM*FAKT
+
+        F=II+IF+LB+2
+        F=FAZA(F)
+	
+        NORM=(2.*II+1.)
+	NORM=NORM*(2.*IF+1.)
+	NORM=SQRT(NORM)
+
+	FAKT=DWIG6J(II,II,LB,IF,IF,TWO)
+	U2=F*NORM*FAKT
+
+	U=(U1+D*D*U2)/(1.+D*D)
+	RETURN
+	END
+C*****************************************************************************
+	INTEGER FUNCTION FAZA(K)
+C*****************************************************************************
+	
+C	FUNCTION CALCULATE (-1)**K
+
+	INTEGER K
+
+	K=K-K/2*2 
+	
+	IF(K.EQ.0) THEN
+	FAZA=1
+	RETURN
+	ELSE
+	FAZA=-1
+	RETURN
+	ENDIF
+	
+	END	
+C*****************************************************************************
+	REAL*8 FUNCTION DK(X,Y)
+C*****************************************************************************
+
+	IMPLICIT NONE
+
+	REAL*8 X,Y
+	
+	IF(X.EQ.Y) THEN
+	DK=1.
+	ELSE
+	DK=0.
+	ENDIF
+
+	RETURN
+	END
+C*****************************************************************************
+	SUBROUTINE MTLPRT
+C*****************************************************************************
+	RETURN
+	END
+C*****************************************************************************
+C*****************************************************************************
+	SUBROUTINE CALC_TENS_PPCO
+C*****************************************************************************
+
+ 	IMPLICIT NONE
+	INCLUDE 'PDCO.DEF'
+
+C	DEKLARACJE FUNKCJI
+	REAL*8	U,B
+ 
+
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+	INTEGER		L1,L2,L3,K,L
+	REAL*8		LAMBDA
+
+
+5	WRITE(*,*)'CALCULATE PROBABILITIES FOR TRANSITIONS Nr (0,0 TO EXIT) >'
+	READ(*,*)ND,NP
+	
+	IF(ND.EQ.0) THEN
+		IND=0
+		RETURN
+	ENDIF
+
+	IF(ND.EQ.-1) THEN
+	WRITE(1,*)'------------------------------------------------',
+     *  '------------'
+	GOTO 5
+	ENDIF
+
+	IF(NP.EQ.ND) THEN
+	WRITE(*,*)'CANNOT CALCULATE POLARIZATION OF GATING TRANSITION'
+	GOTO 5
+	ENDIF
+
+		Q1=1.
+		Q2=1.	
+		II1=IIU(ND)
+		IF1=IFU(ND)
+		D1=DU(ND)
+		P1=PU(ND)
+		II2=IIU(NP)
+		IF2=IFU(NP)
+		D2=DU(NP)
+		P2=PU(NP)
+		IND=3
+
+	L1=MIN(NP,ND)
+	L3=MAX(NP,ND)
+	L2=L1+1
+	L1=L1-1
+	L3=L3-1
+
+C	WRITE(*,*)'NP= ',NP,' ND= ',ND
+C	WRITE(*,*)'L1= ',L1,' L2= ',L2,' L3= ',L3
+	DO 200	LAMBDA=1.,4.
+	L=INT(LAMBDA)
+	U1(L)=1.
+	DO 150 K=L2,L3
+	U1(L)=U1(L)*U(LAMBDA,IIU(K),IFU(K),DU(K))
+150	CONTINUE
+200	CONTINUE
+
+	DO 300	LAMBDA=1.,8.
+	L=INT(LAMBDA)
+	U0(L)=B(LAMBDA,IIU(1),SGJ)
+	DO 250 K=1,L1
+	U0(L)=U0(L)*U(LAMBDA,IIU(K),IFU(K),DU(K))
+250	CONTINUE
+300	CONTINUE
+
+
+	RETURN
+	END
+C*****************************************************************************
+	SUBROUTINE READ_CASC_PPCO
+C*****************************************************************************
+
+	IMPLICIT NONE
+       
+	INCLUDE 'PDCO.DEF'
+	REAL*8 TAN
+c	EXTERNAL TAND
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+	INTEGER K,PD
+	REAL*8	DI,DD
+	
+	WRITE(*,*)' INFORMATION ABOUT THE CASCADE'
+1	WRITE(*,*)' GIVE NUMBER OF TRANSITIONS (MIN. 2, MAX. 20)'
+	READ(*,*)KU 
+	IF(KU.LT.2.OR.KU.GT.20)	GOTO 1
+
+	WRITE(*,*)'GIVE SPIN OF THE INITAL STATE AND ALIGNMENT (SIGMA/J)'
+	READ(*,*)IIU(1),SGJ
+
+	DO 100 K=1,KU,1
+
+5	WRITE(*,10)' GIVE SPIN CHANGE, PARITY CHANGE AND MIXING RATIO',
+     *  ' IN DEG. FOR THE TRANSITION NO. ',K
+10	FORMAT(A49,A30,I2)
+	READ(*,*)DI,PD,DD
+	
+	IF(ABS(DI).GT.2) THEN
+	WRITE(*,*)' TRANSITIONS WITH MAX. MULTIPOLARITY 2 ARE ALOWED ONLY'
+	GOTO 5
+	ENDIF
+
+	IFU(K)=IIU(K)-DI
+
+	IF(IFU(K).LT.0) THEN
+	WRITE(*,*)'TRANSITION NOT ALLOWED FINAL SPIN LESS', 
+     *  'THEN 0'
+	GOTO 5
+	ENDIF
+
+		IF(PD.GE.0) THEN 
+			PU(K)=1
+			ELSE
+			PU(K)=-1
+		ENDIF	
+
+	IF(ABS(DI).EQ.2)DD=90.
+	IF(DD.EQ.90.)DD=89.9999
+	IF(DD.EQ.-90.)DD=-89.9999
+	
+	DU(K)=TAN(DD*180/3.14159265359)
+
+	IF(K.EQ.KU) GOTO 100
+	IIU(K+1)=IFU(K)
+
+100	CONTINUE
+
+	WRITE(*,*)' INFORMATION ABOUT GEOMETRY ---ALL ANGLES IN DEG.---'
+	WRITE(*,*)'POLARIMETER POSITIONS (TH1,TH2)'
+	READ(*,*)TH1,TH2
+	WRITE(*,*)'ANGLE BETWEEN SCATTERING PLANES FI'
+	READ(*,*)FI
+
+
+200	RETURN
+	END
+
+C*****************************************************************************
+	SUBROUTINE WRITE_CASC_PPCO(KOUT)
+C*****************************************************************************
+
+  	IMPLICIT NONE
+	INTEGER	KOUT
+
+	INCLUDE 'PDCO.DEF'
+	REAL*8 ATAN
+c	EXTERNAL ATAND
+
+C	DEKLARACJE ZMIENNYCH LOKALNYCH
+	INTEGER	K
+	INTEGER	NR
+	DIMENSION  NR(20)
+	DATA  NR/1,2,3,4,5,6,7,8,9,10,11,12,13,14,
+     *  15,16,17,18,19,20/
+
+
+	WRITE(KOUT,*)
+	WRITE(KOUT,*)' INFORMATION ABOUT CASCADE'
+	
+	WRITE(KOUT,*)
+	WRITE(KOUT,20)'Nr',(NR(K),K=1,MIN(KU,10))
+	WRITE(KOUT,10)'Ii',(IIU(K),K=1,MIN(KU,10))
+	WRITE(KOUT,10)'If',(IFU(K),K=1,MIN(KU,10))
+	WRITE(KOUT,20)'Parity change',(PU(K),K=1,MIN(KU,10))
+	WRITE(KOUT,10)'Mix.Rat.[deg]',(ATAN(DU(K))*180/3.14159265359,K=1,MIN(KU,10))
+
+	IF(KU.LE.10) GOTO 200
+	WRITE(KOUT,*)
+	WRITE(KOUT,20)'Nr',(NR(K),K=11,MIN(KU,20))
+	WRITE(KOUT,10)'Ii',(IIU(K),K=11,MIN(KU,20))
+	WRITE(KOUT,10)'If',(IFU(K),K=11,MIN(KU,20))
+	WRITE(KOUT,20)'Parity change',(PU(K),K=11,MIN(KU,20))
+	WRITE(KOUT,10)'Mix.Rat.[deg]',(ATAN(DU(K))*180/3.14159265359,K=11,MIN(KU,20))
+
+10	FORMAT(1x,a13,10F6.1)
+20	FORMAT(1x,a13,10I6)
+30	FORMAT(1X,A40,F6.1)
+
+200	CONTINUE
+
+	WRITE(KOUT,*)
+	WRITE(KOUT,*)' POL-POL MODE'
+ 
+	RETURN
+	END
+C*****************************************************************************
+	SUBROUTINE WRITE_GEOM_PPCO(KOUT)
+C*****************************************************************************
+
+  	IMPLICIT NONE
+	INTEGER	KOUT
+	
+	INCLUDE 'PDCO.DEF'
+
+	WRITE(KOUT,*)
+	WRITE(KOUT,*)'INFORMATION ABOUT GEOMETRY ---ALL ANGLES IN DEG.---'
+	WRITE(KOUT,*)
+	WRITE(KOUT,20)'POLARIMETER POSITIONS (TH1,TH2) ',TH1,TH2
+	WRITE(KOUT,30)'ANGLE BETWEEN SCATTERING PLANES (FI) ',FI
+	WRITE(KOUT,*)
+	WRITE(KOUT,30)'INITIAL STATE ALIGNMENT (SIGMA/J) ',SGJ
+
+20	FORMAT(1X,A40,2F6.1)
+30	FORMAT(1X,A40,F6.3)
+
+	RETURN
+	END
+C*****************************************************************************
+	SUBROUTINE ANG_MOM_COUP_COEF
+C*****************************************************************************
+C     U111   RWIG3J, DWIG3J, ... RWIG9J, DWIG9J
+
+      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+      CHARACTER*7 HAZ
+      LOGICAL LOK
+
+      DIMENSION IAZ(93),TST(6)
+
+      PARAMETER (ONE = 1, HF = ONE/2)
+      PARAMETER (DELTA = 1D-11)
+
+      DATA TST / 1.10169 39323 70D0, 0.29055 62890 75D0,
+     1           5.65611 86880 02D0,26.50326 97246 93D0,
+     2           2.15799 90404 01D0, 2.07257 61784 40D0/
+
+      DATA (IAZ(I),I=1,93)
+     1/0101000,2525000,4747000,0111110,2513110,3547110,
+     2 2301220,3723220,4737220,4711330,3525330,3747330,
+     3 3711440,2335440,3547440,1111101,2535101,4747101,
+     4 1311011,3535011,3537011,0113111,4735111,3547111,
+     5 0123211,3725211,4737211,0113121,2325121,3747121,
+     6 1311221,4723221,3547221,3713321,2325321,4747321,
+     7 3511231,2523231,4737231,3701331,2513331,3547331,
+     8 4713431,3735431,4737431,3701341,3535341,2547341,
+     9 2325441,0147441,3747441,1331110,3753110,3774110,
+     A 2511330,2352330,3574330,3511550,3731550,3774550,
+     B 4731770,1153770,3774770,1131111,2553111,4773111,
+     C 2331311,4774311,3573311,2331131,3752131,3574131,
+     D 2511331,4753331,3574331,2310531,1353531,2574531,
+     E 2331351,4753351,3574351,3711551,3752551,2574551,
+     F 3510751,4753751,3774751,4732571,3753571,3574571,
+     G 3710771,1353771,2574771/
+
+      LOK=.TRUE.
+
+C     Table C-1 Wigner-3j symbols.
+C     R.D. Cowan, The theory of atomic spectra, U. of Calif. Press,
+C     Berkeley 1981, 637
+
+      TOTLW3=0
+      TOTLCG=0
+      DO 1 J1 = 0,10
+      DO 1 J2 = 0,6
+      DO 1 J3 = 0,6
+      IF(.NOT.(J1 .GE. J2 .AND. J2 .GE. J3)) GO TO 1
+      A=J1
+      B=J2
+      C=J3
+      X=0
+      Y=0
+      Z=0
+      T=DWIG3J(A,B,C,X,Y,Z)
+      G=DCLEBG(A,B,C,X,Y,Z)
+      TOTLW3=TOTLW3+T
+      TOTLCG=TOTLCG+G
+    1 CONTINUE
+      LOK=LOK .AND. ABS((TOTLW3-TST(1))/TST(1)) .LE. DELTA
+      LOK=LOK .AND. ABS((TOTLCG-TST(2))/TST(2)) .LE. DELTA
+
+C     Table C-1 Wigner-3j symbols.
+C     R.D. Cowan, The theory of atomic spectra, U. of Calif. Press,
+C     Berkeley 1981, 638--645
+
+      TOTLW3=0
+      DO 2 J1 = 0,8
+      DO 2 J2 = 0,8
+      DO 2 J3 = 0,8
+      DO 2 M1 = 0,8
+      DO 2 M2 = -8,8
+      DO 2 M3 = -8,8
+      IF(.NOT.(J1 .GE. J2 .AND. J2 .GE. J3)) GO TO 2
+      IF(M2 .LT. 0 .AND. M1 .EQ. 0) GO TO 2
+      IF(ABS(M1) .LT. ABS(M2) .AND. J1 .EQ. J2) GO TO 2
+      IF(M2 .LT. M3 .AND. J2 .EQ. J3) GO TO 2
+      IF(ABS(M1) .LT. ABS(M3) .AND. J1 .EQ. J2 .AND. J2 .EQ. J3) GOTO 2
+      A=HF*J1
+      B=HF*J2
+      C=HF*J3
+      X=HF*M1
+      Y=HF*M2
+      Z=HF*M3
+      T=DWIG3J(A,B,C,X,Y,Z)
+      TOTLW3=TOTLW3+T
+    2 CONTINUE
+      LOK=LOK .AND. ABS((TOTLW3-TST(3))/TST(3)) .LE. DELTA
+
+C     Clebsch-Gordan Coefficients corresponding to previous table.
+
+      TOTLCG=0
+      KOUNT=0
+      DO 12 J1 = 0,8
+      DO 12 J2 = 0,8
+      DO 12 J3 = 0,8
+      DO 12 M1 = 0,8
+      DO 12 M2 = -8,8
+      DO 12 M3 = -8,8
+      IF(.NOT.(J1 .GE. J2 .AND. J2 .GE. J3)) GO TO 12
+      IF(M2 .LT. 0 .AND. M1 .EQ. 0) GO TO 12
+      IF(ABS(M1) .LT. ABS(M2) .AND. J1 .EQ. J2) GO TO 12
+      IF(M2 .LT. M3 .AND. J2 .EQ. J3) GO TO 12
+      IF(ABS(M1) .LT. ABS(M3) .AND. J1 .EQ. J2 .AND. J2 .EQ. J3)GOTO 12
+      A=HF*J1
+      B=HF*J2
+      C=HF*J3
+      X=HF*M1
+      Y=HF*M2
+      Z=HF*M3
+      G=DCLEBG(A,B,C,X,Y,Z)
+      TOTLCG=TOTLCG+G
+   12 CONTINUE
+      LOK=LOK .AND. ABS((TOTLCG-TST(4))/TST(4)) .LE. DELTA
+
+C     Table D-1 Wigner-6j symbols.
+C     R.D. Cowan, The theory of atomic spectra, U. of Calif. Press,
+C     Berkeley 1981, 648--664
+
+      TOTLW6=0
+      DO 3 J1 = 0,8
+      DO 3 J2 = 0,8
+      DO 3 J3 = 0,8
+      DO 3 L1 = 0,8
+      DO 3 L2 = 0,8
+      DO 3 L3 = 0,8
+      IF(.NOT.(J1 .GE. J2 .AND. J2 .GE. J3)) GO TO 3
+      IF(J1 .LT. L1 .OR. J2 .LT. L2 .OR. J2 .LT. L3) GO TO 3
+      IF(J3 .LT. L2 .AND. J2 .EQ. L3) GO TO 3
+      IF(J3 .LT. L3 .AND. (J1 .EQ. L1 .OR. J2 .EQ. L2)) GO TO 3
+      IF(L1 .LT. L2 .AND. J1 .EQ. J2) GO TO 3
+      IF(L2 .LT. L3 .AND. J2 .EQ. J3) GO TO 3
+      A=HF*J1
+      B=HF*J2
+      C=HF*J3
+      X=HF*L1
+      Y=HF*L2
+      Z=HF*L3
+      T=DWIG6J(A,B,C,X,Y,Z)
+      TOTLW6=TOTLW6+T
+    3 CONTINUE
+      LOK=LOK .AND. ABS((TOTLW6-TST(5))/TST(5)) .LE. DELTA
+
+C     Selected values from Tables 10.13-14 Wigner-9j symbols.
+C     D.A. Varshalovich et al., Quantum theory of angular momentum,
+C     World Scientific 1988, 397--411
+
+      TOTLW9=0
+      DO 4 I = 1,93
+      WRITE(HAZ,'(I7.7)') IAZ(I)
+      READ(HAZ,'(7I1)') IA,IP,IB,IQ,IC,IR,IZ
+      IF(I .LE. 51) THEN
+       A=IA
+       B=IB
+       C=IC
+       P=HF*IP
+       Q=HF*IQ
+       R=IR
+       X=HF
+       Y=HF
+       Z=IZ
+      ELSE
+       A=IA
+       B=HF*IB
+       C=HF*IC
+       P=HF*IP
+       Q=IQ
+       R=HF*IR
+       X=HF
+       Y=HF
+       Z=IZ
+      ENDIF
+      T=DWIG9J(A,B,C,P,Q,R,X,Y,Z)
+      TOTLW9=TOTLW9+T
+    4 CONTINUE
+      LOK=LOK .AND. ABS((TOTLW9-TST(6))/TST(6)) .LE. DELTA
+      IF(LOK)
+     1 WRITE(6,'(7X,''U111 DWIG3J ETC. ** TEST SUCCESSFUL **'')')
+      IF(.NOT.LOK)
+     1 WRITE(6,'(7X,''U111 DWIG3J ETC. ** TEST FAILED **'')')
+      END
+
+      FUNCTION DWIG3J(A1,B1,C1,X1,Y1,Z1)
+      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+      LOGICAL LCG,LJN,LRC
+
+      DIMENSION U(0:202)
+
+      PARAMETER (R1 = 1, HF = R1/2)
+
+      DATA U(0),U(2),(U(2*N-1),N=1,101) /103*0/
+      DATA U(  4),U(  6) /6.931471805599453D-01, 1.791759469228055D+00/
+      DATA U(  8),U( 10) /3.178053830347946D+00, 4.787491742782046D+00/
+      DATA U( 12),U( 14) /6.579251212010101D+00, 8.525161361065414D+00/
+      DATA U( 16),U( 18) /1.060460290274525D+01, 1.280182748008147D+01/
+      DATA U( 20),U( 22) /1.510441257307552D+01, 1.750230784587389D+01/
+      DATA U( 24),U( 26) /1.998721449566189D+01, 2.255216385312342D+01/
+      DATA U( 28),U( 30) /2.519122118273868D+01, 2.789927138384089D+01/
+      DATA U( 32),U( 34) /3.067186010608067D+01, 3.350507345013689D+01/
+      DATA U( 36),U( 38) /3.639544520803305D+01, 3.933988418719949D+01/
+      DATA U( 40),U( 42) /4.233561646075349D+01, 4.538013889847691D+01/
+      DATA U( 44),U( 46) /4.847118135183522D+01, 5.160667556776437D+01/
+      DATA U( 48),U( 50) /5.478472939811232D+01, 5.800360522298052D+01/
+      DATA U( 52),U( 54) /6.126170176100200D+01, 6.455753862700633D+01/
+      DATA U( 56),U( 58) /6.788974313718153D+01, 7.125703896716801D+01/
+      DATA U( 60),U( 62) /7.465823634883016D+01, 7.809222355331531D+01/
+      DATA U( 64),U( 66) /8.155795945611504D+01, 8.505446701758152D+01/
+      DATA U( 68),U( 70) /8.858082754219768D+01, 9.213617560368709D+01/
+      DATA U( 72),U( 74) /9.571969454214320D+01, 9.933061245478743D+01/
+      DATA U( 76),U( 78) /1.029681986145138D+02, 1.066317602606435D+02/
+      DATA U( 80),U( 82) /1.103206397147574D+02, 1.140342117814617D+02/
+      DATA U( 84),U( 86) /1.177718813997451D+02, 1.215330815154386D+02/
+      DATA U( 88),U( 90) /1.253172711493569D+02, 1.291239336391272D+02/
+      DATA U( 92),U( 94) /1.329525750356163D+02, 1.368027226373264D+02/
+      DATA U( 96),U( 98) /1.406739236482343D+02, 1.445657439463449D+02/
+      DATA U(100),U(102) /1.484777669517730D+02, 1.524095925844974D+02/
+      DATA U(104),U(106) /1.563608363030788D+02, 1.603311282166309D+02/
+      DATA U(108),U(110) /1.643201122631952D+02, 1.683274454484277D+02/
+      DATA U(112),U(114) /1.723527971391628D+02, 1.763958484069974D+02/
+      DATA U(116),U(118) /1.804562914175438D+02, 1.845338288614495D+02/
+      DATA U(120),U(122) /1.886281734236716D+02, 1.927390472878449D+02/
+      DATA U(124),U(126) /1.968661816728900D+02, 2.010093163992815D+02/
+      DATA U(128),U(130) /2.051681994826412D+02, 2.093425867525368D+02/
+      DATA U(132),U(134) /2.135322414945633D+02, 2.177369341139542D+02/
+      DATA U(136),U(138) /2.219564418191303D+02, 2.261905483237276D+02/
+      DATA U(140),U(142) /2.304390435657770D+02, 2.347017234428183D+02/
+      DATA U(144),U(146) /2.389783895618343D+02, 2.432688490029827D+02/
+      DATA U(148),U(150) /2.475729140961869D+02, 2.518904022097232D+02/
+      DATA U(152),U(154) /2.562211355500095D+02, 2.605649409718632D+02/
+      DATA U(156),U(158) /2.649216497985528D+02, 2.692910976510198D+02/
+      DATA U(160),U(162) /2.736731242856937D+02, 2.780675734403661D+02/
+      DATA U(164),U(166) /2.824742926876304D+02, 2.868931332954270D+02/
+      DATA U(168),U(170) /2.913239500942703D+02, 2.957666013507606D+02/
+      DATA U(172),U(174) /3.002209486470141D+02, 3.046868567656687D+02/
+      DATA U(176),U(178) /3.091641935801469D+02, 3.136528299498791D+02/
+      DATA U(180),U(182) /3.181526396202093D+02, 3.226634991267262D+02/
+      DATA U(184),U(186) /3.271852877037752D+02, 3.317178871969285D+02/
+      DATA U(188),U(190) /3.362611819791985D+02, 3.408150588707990D+02/
+      DATA U(192),U(194) /3.453794070622669D+02, 3.499541180407702D+02/
+      DATA U(196),U(198) /3.545390855194408D+02, 3.591342053695754D+02/
+      DATA U(200),U(202) /3.637393755555635D+02, 3.683544960724047D+02/
+
+      LCG=.FALSE.
+      GO TO 7
+
+      ENTRY DCLEBG(A1,B1,C1,X1,Y1,Z1)
+      LCG=.TRUE.
+
+    7 H=0
+      IA=NINT(2*A1)
+      IB=NINT(2*B1)
+      IC=NINT(2*C1)
+      IX=NINT(2*X1)
+      IY=NINT(2*Y1)
+      IZ=NINT(2*Z1)
+      IF(IA .LT. 0 .OR. IB .LT. 0 .OR. IC .LT. 0) GO TO 99
+      IF(MOD(IA+IB+IC,2) .NE. 0) GO TO 99
+      JX=ABS(IX)
+      JY=ABS(IY)
+      JZ=ABS(IZ)
+      IF(IA .LT. JX .OR. IB .LT. JY .OR. IC .LT. JZ) GO TO 99
+      IF(MOD(IA+JX,2) .NE. 0 .OR. MOD(IB+JY,2) .NE. 0) GOTO 99
+      IF(MOD(IC+JZ,2) .NE. 0) GO TO 99
+      IF(LCG) THEN
+       IZ=-IZ
+       J0=0
+       F=SQRT((IC+1)*R1)
+      ELSE
+       J0=IA-IB-IZ
+       F=1
+      ENDIF
+      IF(IX+IY+IZ .NE. 0 .OR. MOD(J0,2) .NE. 0) GO TO 99
+      K0=IA+IB+IC+2
+      K1=IA+IB-IC
+      K2=IA-IB+IC
+      K3=IB+IC-IA
+      IF(K1 .LT. 0 .OR. K2 .LT. 0 .OR. K3 .LT. 0) GO TO 99
+      K4=IA+IX
+      K5=IB+IY
+      K6=IC+IZ
+      K7=IA-IX
+      K8=IB-IY
+      K9=IC-IZ
+      K10=IB-IC-IX
+      K11=IA-IC+IY
+      KA=MAX(0,K10,K11)
+      KZ=MIN(K1,K5,K7)
+      W=HF*(U(K1)+U(K2)+U(K3)+U(K4)+U(K5)+U(K6)+U(K7)+U(K8)+U(K9)-U(K0))
+      S=0
+      Q=(-1)**((KA+J0)/2)
+      DO 1 K = KA,KZ,2
+      S=S+Q*EXP(W-(U(K)+U(K1-K)+U(K5-K)+U(K7-K)+U(K-K10)+U(K-K11)))
+    1 Q=-Q
+      H=F*S
+      GO TO 99
+
+      ENTRY DWIG6J(A1,B1,C1,X1,Y1,Z1)
+
+      LJN=.FALSE.
+      LRC=.FALSE.
+      A=A1
+      B=B1
+      C=C1
+      X=X1
+      Y=Y1
+      Z=Z1
+      GO TO 9
+
+      ENTRY DRACAW(A1,B1,C1,X1,Y1,Z1)
+
+      LJN=.FALSE.
+      LRC=.TRUE.
+      GO TO 8
+
+      ENTRY DJAHNU(A1,B1,C1,X1,Y1,Z1)
+
+      LJN=.TRUE.
+      LRC=.FALSE.
+    8 A=A1
+      B=B1
+      C=Y1
+      X=X1
+      Y=C1
+      Z=Z1
+
+    9 H=0
+      IA=NINT(2*A)
+      IB=NINT(2*B)
+      IC=NINT(2*C)
+      IF(IA .LT. 0 .OR. IB .LT. 0 .OR. IC .LT. 0) GO TO 99
+      IX=NINT(2*X)
+      IY=NINT(2*Y)
+      IZ=NINT(2*Z)
+      IF(IX .LT. 0 .OR. IY .LT. 0 .OR. IZ .LT. 0) GO TO 99
+      IABC=IA+IB+IC
+      IAYZ=IA+IY+IZ
+      IF(MOD(IABC,2) .NE. 0 .OR. MOD(IAYZ,2) .NE. 0) GOTO 99
+      IXBZ=IX+IB+IZ
+      IXYC=IX+IY+IC
+      IF(MOD(IXBZ,2) .NE. 0 .OR. MOD(IXYC,2) .NE. 0) GOTO 99
+      K1=IA+IB-IC
+      K2=IA-IB+IC
+      K3=IB+IC-IA
+      IF(K1 .LT. 0 .OR. K2 .LT. 0 .OR. K3 .LT. 0) GO TO 99
+      K4=IA+IY-IZ
+      K5=IA-IY+IZ
+      K6=IY+IZ-IA
+      IF(K4 .LT. 0 .OR. K5 .LT. 0 .OR. K6 .LT. 0) GO TO 99
+      K7=IX+IB-IZ
+      K8=IX-IB+IZ
+      K9=IB+IZ-IX
+      IF(K7 .LT. 0 .OR. K8 .LT. 0 .OR. K9 .LT. 0) GO TO 99
+      K10=IX+IY-IC
+      K11=IX-IY+IC
+      K12=IY+IC-IX
+      IF(K10 .LT. 0 .OR. K11 .LT. 0 .OR. K12 .LT. 0) GO TO 99
+      IABXY=IA+IB+IX+IY
+      IBCYZ=IB+IC+IY+IZ
+      ICAZX=IC+IA+IZ+IX
+      KA=MAX(IABC,IAYZ,IXBZ,IXYC)
+      KZ=MIN(IABXY,IBCYZ,ICAZX)
+      J1=KA
+      IF(LRC .OR. LJN) J1=KA+IABXY
+      W=HF*(U(K1)+U(K2)+U(K3)-U(IABC+2)+U(K4)+U(K5)+U(K6)-U(IAYZ+2)+
+     1      U(K7)+U(K8)+U(K9)-U(IXBZ+2)+U(K10)+U(K11)+U(K12)-U(IXYC+2))
+      S=0
+      Q=(-1)**(J1/2)
+      DO 2 K = KA,KZ,2
+      S=S+Q*EXP(W+U(K+2)-(U(K-IABC)+U(K-IAYZ)+U(K-IXBZ)+U(K-IXYC)+
+     1            U(IABXY-K)+U(IBCYZ-K)+U(ICAZX-K)))
+    2 Q=-Q
+      H=S
+      IF(LJN) H=SQRT(((IC+1)*(IZ+1))*R1)*H
+
+   99 DWIG3J=H
+      RETURN
+      END
+
+      FUNCTION DWIG9J(A,B,C,P,Q,R,X,Y,Z)
+      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+
+      PARAMETER (R1 = 1, HF = R1/2)
+
+      IA=NINT(2*A)
+      IB=NINT(2*B)
+      IC=NINT(2*C)
+      IP=NINT(2*P)
+      IQ=NINT(2*Q)
+      IR=NINT(2*R)
+      IX=NINT(2*X)
+      IY=NINT(2*Y)
+      IZ=NINT(2*Z)
+
+      H=0
+      IF(IA .LT. 0 .OR. IB .LT. 0 .OR. IC .LT. 0 .OR.
+     1   IP .LT. 0 .OR. IQ .LT. 0 .OR. IR .LT. 0 .OR.
+     2   IX .LT. 0 .OR. IY .LT. 0 .OR. IZ .LT. 0) GO TO 99
+      J0=MAX(ABS(IA-IZ),ABS(IY-IP),ABS(IB-IR))
+      J1=MIN(IA+IZ,IY+IP,IB+IR)
+      S=0
+      V=(-1)**J0
+      DO 1 J = J0,J1
+      AJ=HF*J
+      H=DWIG6J(A,P,X,Y,Z,AJ)
+      IF(H .NE. 0) H=H*DWIG6J(B,Q,Y,P,AJ,R)
+      IF(H .NE. 0) H=H*DWIG6J(C,R,Z,AJ,A,B)
+      S=S+V*(AJ+HF)*H
+    1 V=-V
+      H=2*S
+   99 DWIG9J=H
+      RETURN
+      END
+
+      FUNCTION RWIG3J(A,B,C,X,Y,Z)
+      IMPLICIT DOUBLE PRECISION (D)
+
+      SROUND(D)=D+(D-SNGL(D))
+      RWIG3J=SROUND(
+     1 DWIG3J(DBLE(A),DBLE(B),DBLE(C),DBLE(X),DBLE(Y),DBLE(Z)))
+      RETURN
+
+      ENTRY RCLEBG(A,B,C,X,Y,Z)
+      RCLEBG=SROUND(
+     1 DCLEBG(DBLE(A),DBLE(B),DBLE(C),DBLE(X),DBLE(Y),DBLE(Z)))
+      RETURN
+
+      ENTRY RWIG6J(A,B,C,X,Y,Z)
+      RWIG6J=SROUND(
+     1 DWIG6J(DBLE(A),DBLE(B),DBLE(C),DBLE(X),DBLE(Y),DBLE(Z)))
+      RETURN
+
+      ENTRY RRACAW(A,B,C,X,Y,Z)
+      RRACAW=SROUND(
+     1 DRACAW(DBLE(A),DBLE(B),DBLE(C),DBLE(X),DBLE(Y),DBLE(Z)))
+      RETURN
+
+      ENTRY RJAHNU(A,B,C,X,Y,Z)
+      RJAHNU=SROUND(
+     1 DJAHNU(DBLE(A),DBLE(B),DBLE(C),DBLE(X),DBLE(Y),DBLE(Z)))
+      RETURN
+
+      ENTRY RWIG9J(A,B,C,P,Q,R,X,Y,Z)
+      RWIG9J=SROUND(DWIG9J(DBLE(A),DBLE(B),DBLE(C),DBLE(P),DBLE(Q),
+     1                     DBLE(R),DBLE(X),DBLE(Y),DBLE(Z)))
+      RETURN
+      END
+
+

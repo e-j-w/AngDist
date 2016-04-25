@@ -1,0 +1,11 @@
+Angular Distribution Calculator
+Maintainer: Jonathan Williams
+
+Calculates the directional distribution for gamma radiation emitted from an axially symmetric oriented source.  In part based on g77 code by K. Starosta for gamma-gamma angular correlations.
+
+
+Porting from g77 to gfortran compatible code:
+
+-used -std=legacy flag to supress warnings
+-used -ffixed-line-length-none to avoid errors caused by lines that go over the default 72 character limit
+-got rid of SIND, COSD, TAND, etc function calls since trig functions in degrees are not implemented in gfortran afaik, replaced with manual conversion from radians to degrees
