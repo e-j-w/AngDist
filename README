@@ -3,9 +3,12 @@ Maintainer: Jonathan Williams
 
 Calculates the directional distribution for gamma radiation emitted from an axially symmetric oriented source.  In part based on g77 code by K. Starosta for gamma-gamma angular correlations.
 
+INSTALLATION
+
+Use 'make' to compile.  Tested and seems to work with gfortran on Ubuntu 14.04.  Requires libmathlib (found in the 'cernlib' package on Ubuntu).
+
 
 Porting from g77 to gfortran compatible code:
 
 -used -std=legacy flag to supress warnings
 -used -ffixed-line-length-none to avoid errors caused by lines that go over the default 72 character limit
--got rid of SIND, COSD, TAND, etc function calls since trig functions in degrees are not implemented in gfortran afaik, replaced with manual conversion from radians to degrees

@@ -24,13 +24,27 @@ c	Declare variables
 	WRITE(*,*)'Enter [lambda, sigma/I]:'
 	read(*,*)lambda,sigmaj
 
+	WRITE(*,*)'Initial and final spin'
 	WRITE(*,*)'Enter [I_final, I_initial]:'
 	read(*,*)I_final,I_init
 	
-	WRITE(*,*)'Enter [L, mixing ratio with L+1 (0 for no mixing)]:'
+	WRITE(*,*)'Transition multipolarity (EL, ML)'
+	WRITE(*,*)'Enter [L, mixing ratio with L+1 (L+1/L ratio, 0 for no mixing)]:'
 	read(*,*)l,delta
 	
 	WRITE(*,*)""
+	
+	WRITE(*,*)'Angular distribution coefficient and statistical tensor values:'
+1	FORMAT(" A_{",I2,"} = ",F10.6)
+2	FORMAT(" B_{",I2,"} = ",F10.6)
+c	Print A and B factors
+	do j=0,lambda,2
+		ind_val=j;
+		WRITE(*,1)j,A(ind_val,l,I_final,I_init,delta)
+		WRITE(*,2)j,B(ind_val,I_init,sigmaj)
+	end do
+	WRITE(*,*)""
+
 	
 c	Get factor to normalize angular distribution data by
 	norm_factor=0.	
@@ -42,12 +56,11 @@ c	Get factor to normalize angular distribution data by
 		end do
 		norm_factor=norm_factor+dist_val
 	end do
-	WRITE(*,*)"Normalization factor = ",norm_factor
-	WRITE(*,*)""
 
 c	Report angular distributions	
-	WRITE(*,*)"Angular distribution coefficients: "
-	WRITE(*,*)"Angle (deg), coefficient "
+	WRITE(*,*)"Angular distribution function"
+	WRITE(*,*)"Normalization factor = ",norm_factor
+	WRITE(*,*)"Angle (deg), value "
 	do i=0,180,5
 		dist_val=0.
 		do j=0,lambda,2
@@ -60,8 +73,6 @@ c			statements in this function)
 		dist_val=dist_val/norm_factor
 		WRITE(*,*)i,dist_val
 	end do
-
-	
 
 	END
 	
