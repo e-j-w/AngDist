@@ -17,12 +17,9 @@ c	Declare variables
 	
 	
 	WRITE(*,*)''
-	WRITE(*,*)'ANGULAR DISTRIBUTION CALCULATOR'
-	WRITE(*,*)'-------------------------------'
+	WRITE(*,*)'GAMMA RAY ANGULAR DISTRIBUTION CALCULATOR'
+	WRITE(*,*)'-----------------------------------------'
 	WRITE(*,*)''
-
-	WRITE(*,*)'Enter [lambda, sigma/I]:'
-	read(*,*)lambda,sigmaj
 
 	WRITE(*,*)'Initial and final spin'
 	WRITE(*,*)'Enter [I_final, I_initial]:'
@@ -31,6 +28,17 @@ c	Declare variables
 	WRITE(*,*)'Transition multipolarity (EL, ML)'
 	WRITE(*,*)'Enter [L, mixing ratio with L+1 (L+1/L ratio, 0 for no mixing)]:'
 	read(*,*)l,delta
+
+	WRITE(*,*)'Width of distribution'
+	WRITE(*,*)'Enter [sigma/I]:'
+	read(*,*)sigmaj
+	
+c	lambda, L, L' add according to the triangle rule, so maximum lambda is L+L'
+	if(delta.gt.0.0) then
+		lambda=2*(L+1)
+	else
+		lambda=2*L
+	endif
 	
 	WRITE(*,*)""
 	
