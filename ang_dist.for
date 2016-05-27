@@ -14,7 +14,7 @@ c	Declare variables
 	REAL*8 l,lprime,I_final,I_init,delta
 	REAL*8 angle,norm_factor,dist_val
 	REAL*8 ind_val
-	
+	REAL*8 A_val,B_val
 	
 	WRITE(*,*)''
 	WRITE(*,*)'GAMMA RAY ANGULAR DISTRIBUTION CALCULATOR'
@@ -48,8 +48,10 @@ c	lambda, L, L' add according to the triangle rule, so maximum lambda is L+L'
 c	Print A and B factors
 	do j=0,lambda,2
 		ind_val=j;
-		WRITE(*,1)j,A(ind_val,l,I_final,I_init,delta)
-		WRITE(*,2)j,B(ind_val,I_init,sigmaj)
+		A_val=A(ind_val,l,I_final,I_init,delta)
+		B_val=B(ind_val,I_init,sigmaj)
+		WRITE(*,1)j,A_val
+		WRITE(*,2)j,B_val
 	end do
 	WRITE(*,*)""
 

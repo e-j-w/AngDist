@@ -26,7 +26,7 @@ C	DEKLARACJE ZMIENNYCH LOKALNYCH
 	DATA            ZERO/0./,HALF/0.5/,MHALF/-0.5/
 
 
-	P=INT(2.*I)	
+	P=INT(2.*I)
 	P=FAZA(P)
 
 	IF(SGJ.EQ.0.AND.P.EQ.1) THEN
@@ -42,7 +42,7 @@ C	DEKLARACJE ZMIENNYCH LOKALNYCH
 	SUM=FAZA(F)*DCLEBG(I,I,LB,MHALF,HALF,ZERO)
 	F=INT(I-0.5)
 	SUM=SUM+FAZA(F)*DCLEBG(I,I,LB,HALF,MHALF,ZERO)
-	WRITE(*,1000)
+c	WRITE(*,1000)
 1000	FORMAT(' SIGMA=0 FOR HALF SPINS MEANS P(M=1/2)=P(M=-1/2)=1/2 ')
         ENDIF
 
@@ -159,19 +159,11 @@ C*****************************************************************************
 	INTEGER FUNCTION FAZA(K)
 C*****************************************************************************
 	
-C	FUNCTION CALCULATE (-1)**K
+C	CALCULATES (-1)**K
 
 	INTEGER K
-
-	K=K-K/2*2 
 	
-	IF(K.EQ.0) THEN
-	FAZA=1
-	RETURN
-	ELSE
-	FAZA=-1
-	RETURN
-	ENDIF
+	FAZA=INT(-1.**K)
 	
 	END	
 C*****************************************************************************
