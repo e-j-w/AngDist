@@ -15,6 +15,7 @@ c	Declare variables
 	REAL*8 angle,norm_factor,dist_val
 	REAL*8 ind_val
 	REAL*8 A_val,B_val
+	REAL*8 j
 	
 	WRITE(*,*)''
 	WRITE(*,*)'GAMMA RAY ANGULAR DISTRIBUTION CALCULATOR'
@@ -43,13 +44,12 @@ c	lambda, L, L' add according to the triangle rule, so maximum lambda is L+L'
 	WRITE(*,*)""
 	
 	WRITE(*,*)'Angular distribution coefficient and statistical tensor values:'
-1	FORMAT(" A_{",I2,"} = ",F10.6)
-2	FORMAT(" B_{",I2,"} = ",F10.6)
+1	FORMAT(" A_{",F10.0,"} = ",F10.6)
+2	FORMAT(" B_{",F10.0,"} = ",F10.6)
 c	Print A and B factors
 	do j=0,lambda,2
-		ind_val=j;
-		A_val=A(ind_val,l,I_final,I_init,delta)
-		B_val=B(ind_val,I_init,sigmaj)
+		A_val=A(j,l,I_final,I_init,delta)
+		B_val=B(j,I_init,sigmaj)
 		WRITE(*,1)j,A_val
 		WRITE(*,2)j,B_val
 	end do
@@ -69,7 +69,6 @@ c	Get factor to normalize angular distribution data by
 
 c	Report angular distributions	
 	WRITE(*,*)"Angular distribution function"
-	WRITE(*,*)"Normalization factor = ",norm_factor
 	WRITE(*,*)"Angle (deg), value "
 	do i=0,180,5
 		dist_val=0.
@@ -80,7 +79,6 @@ c			to avoid recursive write statements (since there are write
 c			statements in this function)
 			dist_val=dist_val+LP(j,cos(i*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
 		end do
-		dist_val=dist_val/norm_factor
 		WRITE(*,*)i,dist_val
 	end do
 
@@ -113,7 +111,7 @@ c	specified order at the specified value
 
 C	Declare global variables
 	REAL*4 val
-	integer order
+	REAL*8 order
 	
 	LP=0.
 	
