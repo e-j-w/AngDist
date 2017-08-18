@@ -7,7 +7,7 @@ Contributors: K. Starosta, J. Williams
 
 ## Description
 
-Calculates the directional distribution for gamma radiation emitted from an axially symmetric oriented source.  In part based on `g77` code by K. Starosta for gamma-gamma angular Installation.
+Calculates the directional distribution for gamma radiation emitted from an axially symmetric oriented source.  In part based on `g77` code by K. Starosta for gamma-gamma angular correlations.
 
 ## Installation
 
