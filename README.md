@@ -11,7 +11,7 @@ Calculates the directional distribution for gamma radiation emitted from an axia
 
 ## Installation
 
-Use 'make' to compile.  Tested and seems to work with gfortran on Ubuntu 14.04/16.04 and Scientific Linux 6.  Requires `libmathlib` (in the `cernlib` package on Ubuntu 14.04/16.04 and SL6).
+Use `make` to compile.  Tested and seems to work with gfortran on Ubuntu 14.04/16.04 and Scientific Linux 6.  Requires `libmathlib` (in the `cernlib` package on Ubuntu 14.04/16.04 and SL6).
 If on SL6, you may need to replace the LIB line in the `Makefile` with:
 
 ```
