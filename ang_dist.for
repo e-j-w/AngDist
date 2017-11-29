@@ -34,13 +34,22 @@ c	Declare variables
 	WRITE(*,*)'Width of distribution'
 	WRITE(*,*)'Enter [sigma/I]:'
 	read(*,*)sigmaj
-	
-c	lambda, L, L' add according to the triangle rule, so maximum lambda is L+L'
+
+c L, L' are (possible) multipolarities being considered
+c eg. for M1+E2, L and L' can both be either 1 or 2
+c	lambda, L, L' add according to the triangle rule*,
+c	so maximum lambda is L+L', minimum lambda is |L'-L|
+c but all possible combinations need to be considered
+c eg. for M1+E2, L=1 L'=1, L=2,L'=1, L=2, L'=2 ...
+c so the max value will always be 2*(max L)
+c and the min value will always be 0
 	if(delta.gt.0.0) then
-		lambda=2*(L+1)
+c		L'=L+1 (see pg. 542, Hamilton)
+		lambda=2*(l+1)
 	else
-		lambda=2*L
+		lambda=2*l
 	endif
+c	*from the Wigner 3j terms in eq. 12.150, Hamilton 
 	
 	WRITE(*,*)""
 	
@@ -57,16 +66,6 @@ c	Print A and B factors
 	WRITE(*,*)""
 
 	
-c	Get factor to normalize angular distribution data by
-	norm_factor=0.	
-	do i=0,180,5
-		dist_val=0.
-		do j=0,lambda,2
-			ind_val=j;
-			dist_val=dist_val+LP(j,cos(i*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
-		end do
-		norm_factor=norm_factor+dist_val
-	end do
 
 c	Report angular distributions	
 	WRITE(*,*)"Angular distribution function"
@@ -83,15 +82,13 @@ c			statements in this function)
 		WRITE(*,*)i,dist_val
 	end do
 	
+c	Report angular distributions for TIGRESS angles
 	WRITE(*,*)"Angular distribution at TIGRESS ring angles"
 	WRITE(*,*)"Angle (deg), value "
 	ang=37.524
 	dist_val=0.
 	do j=0,lambda,2
 		ind_val=j;
-c		Need to execute this on its own line rather than a write line 
-c		to avoid recursive write statements (since there are write 
-c		statements in this function)
 		dist_val=dist_val+LP(j,cos(ang*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
 	end do
 	WRITE(*,*)ang,dist_val
@@ -99,9 +96,6 @@ c		statements in this function)
 	dist_val=0.
 	do j=0,lambda,2
 		ind_val=j;
-c		Need to execute this on its own line rather than a write line 
-c		to avoid recursive write statements (since there are write 
-c		statements in this function)
 		dist_val=dist_val+LP(j,cos(ang*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
 	end do
 	WRITE(*,*)ang,dist_val
@@ -109,9 +103,6 @@ c		statements in this function)
 	dist_val=0.
 	do j=0,lambda,2
 		ind_val=j;
-c		Need to execute this on its own line rather than a write line 
-c		to avoid recursive write statements (since there are write 
-c		statements in this function)
 		dist_val=dist_val+LP(j,cos(ang*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
 	end do
 	WRITE(*,*)ang,dist_val
@@ -119,9 +110,6 @@ c		statements in this function)
 	dist_val=0.
 	do j=0,lambda,2
 		ind_val=j;
-c		Need to execute this on its own line rather than a write line 
-c		to avoid recursive write statements (since there are write 
-c		statements in this function)
 		dist_val=dist_val+LP(j,cos(ang*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
 	end do
 	WRITE(*,*)ang,dist_val
@@ -129,9 +117,6 @@ c		statements in this function)
 	dist_val=0.
 	do j=0,lambda,2
 		ind_val=j;
-c		Need to execute this on its own line rather than a write line 
-c		to avoid recursive write statements (since there are write 
-c		statements in this function)
 		dist_val=dist_val+LP(j,cos(ang*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
 	end do
 	WRITE(*,*)ang,dist_val
@@ -139,9 +124,6 @@ c		statements in this function)
 	dist_val=0.
 	do j=0,lambda,2
 		ind_val=j;
-c		Need to execute this on its own line rather than a write line 
-c		to avoid recursive write statements (since there are write 
-c		statements in this function)
 		dist_val=dist_val+LP(j,cos(ang*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
 	end do
 	WRITE(*,*)ang,dist_val
