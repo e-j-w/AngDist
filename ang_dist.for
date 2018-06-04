@@ -8,15 +8,15 @@ c	Statistical tensor and F-coefficents are calculated using existing
 c	code by K. Starosta.
 	
 c	Declare functions
-	REAL*8 B,F1,A,LP
+	REAL*8 A,B,DIST
 c	Declare variables
 	REAL*8 lambda,sigmaj
 	REAL*8 l,lprime,I_final,I_init,delta
 	REAL*8 angle,norm_factor,dist_val
-	REAL*8 ind_val
+	REAL*8 q2,q4
 	REAL*8 A_val,B_val
-	REAL*8 j
-	REAL*4 ang
+	REAL*8 j,order
+	REAL*8 ang
 	
 	WRITE(*,*)''
 	WRITE(*,*)'GAMMA RAY ANGULAR DISTRIBUTION CALCULATOR'
@@ -34,6 +34,10 @@ c	Declare variables
 	WRITE(*,*)'Width of distribution'
 	WRITE(*,*)'Enter [sigma/I]:'
 	read(*,*)sigmaj
+
+	WRITE(*,*)'Attenuation factors'
+	WRITE(*,*)'Enter [Q2,Q4]:'
+	read(*,*)q2,q4
 
 c L, L' are (possible) multipolarities being considered
 c eg. for M1+E2, L and L' can both be either 1 or 2
@@ -73,11 +77,13 @@ c	Report angular distributions
 	do i=0,180,5
 		dist_val=0.
 		do j=0,lambda,2
-			ind_val=j;
+			order=j
+			ang=i
 c			Need to execute this on its own line rather than a write line 
 c			to avoid recursive write statements (since there are write 
 c			statements in this function)
-			dist_val=dist_val+LP(j,cos(i*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
+			dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4)
+c			dist_val=dist_val+LP(j,cos(i*3.14159265359/180))*B(order,I_init,sigmaj)*A(order,l,I_final,I_init,delta)
 		end do
 		WRITE(*,*)i,dist_val
 	end do
@@ -88,48 +94,73 @@ c	Report angular distributions for TIGRESS angles
 	ang=37.524
 	dist_val=0.
 	do j=0,lambda,2
-		ind_val=j;
-		dist_val=dist_val+LP(j,cos(ang*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
+		order=j;
+		dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4)
 	end do
 	WRITE(*,*)ang,dist_val
 	ang=53.678
 	dist_val=0.
 	do j=0,lambda,2
-		ind_val=j;
-		dist_val=dist_val+LP(j,cos(ang*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
+		order=j;
+		dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4)
 	end do
 	WRITE(*,*)ang,dist_val
 	ang=81.838
 	dist_val=0.
 	do j=0,lambda,2
-		ind_val=j;
-		dist_val=dist_val+LP(j,cos(ang*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
+		order=j;
+		dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4)
 	end do
 	WRITE(*,*)ang,dist_val
 	ang=98.162
 	dist_val=0.
 	do j=0,lambda,2
-		ind_val=j;
-		dist_val=dist_val+LP(j,cos(ang*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
+		order=j;
+		dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4)
 	end do
 	WRITE(*,*)ang,dist_val
 	ang=126.322
 	dist_val=0.
 	do j=0,lambda,2
-		ind_val=j;
-		dist_val=dist_val+LP(j,cos(ang*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
+		order=j;
+		dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4)
 	end do
 	WRITE(*,*)ang,dist_val
 	ang=142.476
 	dist_val=0.
 	do j=0,lambda,2
-		ind_val=j;
-		dist_val=dist_val+LP(j,cos(ang*3.14159265359/180))*B(ind_val,I_init,sigmaj)*A(ind_val,l,I_final,I_init,delta)
+		order=j;
+		dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4)
 	end do
 	WRITE(*,*)ang,dist_val
 
 	END
 	
+c Function calculates contribution to angular distribution
+	REAL*8 FUNCTION DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4)
+
+	IMPLICIT NONE
+
+C	Declare functions
+	REAL*8 A,B,LP
+
+C	Declare global variables
+	REAL*8 l,I_init,I_final,delta,sigmaj,order
+	REAL*8 ang
+	REAL*8 q2,q4
+
+	if(order.eq.2) then
+		DIST=q2*LP(order,cos(ang*3.14159265359/180))*B(order,I_init,sigmaj)*A(order,l,I_final,I_init,delta)
+	else if(order.eq.4) then
+		DIST=q4*LP(order,cos(ang*3.14159265359/180))*B(order,I_init,sigmaj)*A(order,l,I_final,I_init,delta)
+	else
+		DIST=LP(order,cos(ang*3.14159265359/180))*B(order,I_init,sigmaj)*A(order,l,I_final,I_init,delta)
+	endif
+
+	RETURN
+	END
+
+
 	
 c	Function calculates angular distribution coefficients
 c	according to eq. 12.185, pg. 542
@@ -156,7 +187,7 @@ c	specified order at the specified value
 	IMPLICIT NONE
 
 C	Declare global variables
-	REAL*4 val
+	REAL*8 val
 	REAL*8 order
 	
 	LP=0.
