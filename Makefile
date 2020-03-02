@@ -1,5 +1,6 @@
 FOR = gfortran -std=legacy -ffixed-line-length-none
-LIB = -lmathlib
+#LIB = -lmathlib
+LIB = /usr/lib64/cernlib/2006/lib/libmathlib.so.2_gfortran
 
 all:ang_dist ang_dist_cmd
 

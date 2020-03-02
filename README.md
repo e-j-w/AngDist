@@ -20,6 +20,8 @@ If on SL6, you may need to replace the LIB line in the `Makefile` with:
 LIB = /usr/lib64/cernlib/2006/lib/libmathlib.so.2_gfortran
 ```
 
+On CentOS 7, one must manually install the cernlib package (available at http://download-ib01.fedoraproject.org/pub/epel/6/x86_64/Packages/c/cernlib-2006-35.el6.x86_64.rpm) since it is not available in the official repos.
+
 ### Notes from porting the code from `g77` to `gfortran`:
 
 * used -std=legacy flag to supress warnings
