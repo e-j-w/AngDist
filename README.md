@@ -4,7 +4,7 @@ Maintainer: Jonathan Williams
 
 ## Description
 
-Calculates the directional distribution for gamma radiation emitted from an axially symmetric oriented source.  In part based on code written for the `g77` compiler by K. Starosta to calculate gamma-gamma angular correlations.
+Calculates the directional distribution for gamma radiation emitted from an axially symmetric oriented source.  Based on code written for the `g77` compiler by K. Starosta to calculate gamma-gamma angular correlations.
 
 ## Build instructions
 
@@ -33,8 +33,8 @@ Only the first 3 argments (I_final, I_init, L) are required - omitting later arg
 | I_final | Final spin of the electromagnetic transition. |
 | I_init  | Initial spin of the electromagnetic transition. |
 | L       | Multipolarity (1=dipole, 2=quadrupole, etc.) of the electromagnetic transition. |
-| delta   | Themixing ratio with the L+1 multipole (L+1/L ratio, 0 for no mixing). Default value: 0 |
-| sigmaj  | De-orientation parameter specifying the width of the initial distribution.  Default value: 0 |
+| delta   | The mixing ratio with the L+1 multipole (L+1/L ratio, 0 for no mixing). Default value: 0 |
+| sigmaj  | De-orientation parameter specifying the width of the initial distribution of magnetic sub-states.  Default value: 0 |
 | q2      | Attenuation factor (multiplicative coefficient) for the 2nd order Legendre polynomial term.  Default value: 1 |
 | q4 | Attenuation factor (multiplicative coefficient) for the 4th order Legendre polynomial term.  Default value: 1 |
 | q6 | Attenuation factor (multiplicative coefficient) for the 6th order Legendre polynomial term.  Default value: 1 |
@@ -43,8 +43,12 @@ Only the first 3 argments (I_final, I_init, L) are required - omitting later arg
 ## Contributors 
 
 * K. Starosta (original codebase)
-* J. Williams (more features, port to gfortran)
-* This code uses components of the `cernlib` math library, which are provided in the `cernlib` directory of this repo under their original license.
+* J. Williams (more features, port to `gfortran`)
+* This code uses components of the [CERNLIB](https://cernlib.web.cern.ch/) math library, which are provided in the cernlib [directory](cernlib/) of this repo under their original license.
+
+## References
+
+* W.D Hamilton et al., 'The Electromagnetic	Interaction in Nuclear Spectroscopy', particularly eq. 12.197
 
 ### Notes from porting the code from `g77` to `gfortran`:
 
