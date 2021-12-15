@@ -1,4 +1,4 @@
-	PROGRAM ang_dist_cmd
+	PROGRAM ang_dist
 
 c	Program calculates directional distributions of gamma rays
 c	according to eq. 12.197 of W.D Hamilton et al., 'The Electromagnetic
@@ -24,71 +24,103 @@ c	Declare variables
 	count=iargc()
 	i=0
 
-	if(count.ne.8) then
-		WRITE(*,*)'./ang_dist_cmd I_final I_init l delta sigmaj q2 q4 q6'
-		stop
-	endif
-
-	WRITE(*,*)'Parsed arguments:'
-	if(i.lt.count) then
-		CALL getarg(i+1, arg)
-		read(arg,*)I_final
-		WRITE (*,*)"I_final: ",arg
-		i=i+1
-	endif
-	if(i.lt.count) then
-		CALL getarg(i+1, arg)
-		read(arg,*)I_init
-		WRITE (*,*)"I_init: ",arg
-		i=i+1
-	endif
-	if(i.lt.count) then
-		CALL getarg(i+1, arg)
-		read(arg,*)l
-		WRITE (*,*)"l: ",arg
-		i=i+1
-	endif
-	if(i.lt.count) then
-		CALL getarg(i+1, arg)
-		read(arg,*)delta
-		WRITE (*,*)"delta: ",arg
-		i=i+1
-	endif
-	if(i.lt.count) then
-		CALL getarg(i+1, arg)
-		read(arg,*)sigmaj
-		WRITE (*,*)"sigmaj: ",arg
-		i=i+1
-	endif
-	if(i.lt.count) then
-		CALL getarg(i+1, arg)
-		read(arg,*)q2
-		WRITE (*,*)"q2: ",arg
-		i=i+1
-	endif
-	if(i.lt.count) then
-		CALL getarg(i+1, arg)
-		read(arg,*)q4
-		WRITE (*,*)"q4: ",arg
-		i=i+1
-	endif
-	if(i.lt.count) then
-		CALL getarg(i+1, arg)
-		read(arg,*)q6
-		WRITE (*,*)"q6: ",arg
-		i=i+1
-	endif
-
-	if(i.ne.7) then
-		WRITE(*,*)'ERROR: wrong number of arguments!'
-		stop
-	endif
-	
-
 	WRITE(*,*)''
 	WRITE(*,*)'GAMMA RAY ANGULAR DISTRIBUTION CALCULATOR'
 	WRITE(*,*)'-----------------------------------------'
 	WRITE(*,*)''
+
+	if(count.gt.0) then
+
+		WRITE(*,*)'Parsed arguments:'
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)I_final
+			WRITE (*,*)"I_final: ",arg
+			i=i+1
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)I_init
+			WRITE (*,*)"I_init: ",arg
+			i=i+1
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)l
+			WRITE (*,*)"L: ",arg
+			i=i+1
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)delta
+			WRITE (*,*)"delta: ",arg
+			i=i+1
+		else
+			WRITE (*,*)'delta: 0 (default)'
+			delta=0
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)sigmaj
+			WRITE (*,*)"sigmaj: ",arg
+			i=i+1
+		else
+			WRITE (*,*)'sigmaj: 0 (default)'
+			sigmaj=0
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)q2
+			WRITE (*,*)"q2: ",arg
+			i=i+1
+		else
+			WRITE (*,*)'q2: 1 (default)'
+			q2=1
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)q4
+			WRITE (*,*)"q4: ",arg
+			i=i+1
+		else
+			WRITE (*,*)'q4: 1 (default)'
+			q4=1
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)q6
+			WRITE (*,*)"q6: ",arg
+			i=i+1
+		else
+			WRITE (*,*)'q6: 1 (default)'
+			q6=1
+		endif
+
+	else
+
+		WRITE(*,*)'Command line usage:'
+		WRITE(*,*)'./ang_dist I_final I_init L delta sigmaj q2 q4 q6'
+		WRITE(*,*)'Required: I_final, I_init, L (later arguments will use default values if omitted)'
+		WRITE(*,*)''
+
+		WRITE(*,*)'Initial and final spin'
+		WRITE(*,*)"Enter [I_final, I_initial] (eg. '0,2'):"
+		read(*,*)I_final,I_init
+		
+		WRITE(*,*)'Transition multipolarity (EL, ML)'
+		WRITE(*,*)'Enter [L, mixing ratio with L+1 (L+1/L ratio, 0 for no mixing)]:'
+		read(*,*)l,delta
+
+		WRITE(*,*)'Width of distribution'
+		WRITE(*,*)'Enter [sigma/I]:'
+c See Hamilton eq 12.81 and surrounding text for discussion 
+c of this parameter
+		read(*,*)sigmaj
+
+		WRITE(*,*)'Attenuation factors (multiplicative coefficients for the Legendre polynomial terms)'
+		WRITE(*,*)'Enter [Q2,Q4,Q6]:'
+		read(*,*)q2,q4,q6
+	endif
 
 
 c L, L' are (possible) multipolarities being considered
@@ -121,8 +153,6 @@ c	Print A and B factors
 	end do
 	WRITE(*,*)""
 
-	
-
 c	Report angular distributions	
 	WRITE(*,*)"Angular distribution function"
 	WRITE(*,*)"Angle (deg), value "
@@ -139,6 +169,7 @@ c			dist_val=dist_val+LP(j,cos(i*3.14159265359/180))*B(order,I_init,sigmaj)*A(or
 		end do
 		WRITE(*,*)i,dist_val
 	end do
+	WRITE(*,*)""
 	
 c	Report angular distributions for TIGRESS angles
 	WRITE(*,*)"Angular distribution at TIGRESS ring angles"

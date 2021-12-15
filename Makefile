@@ -1,20 +1,18 @@
 FOR = gfortran -std=legacy -ffixed-line-length-none
-#LIB = -lmathlib
-LIB = /usr/lib64/cernlib/2006/lib/libmathlib.so.2_gfortran
 
-all:ang_dist ang_dist_cmd
+all:ang_dist
 
-ang_dist: ang_dist.for w.o
-	$(FOR) -o ang_dist w.o ang_dist.for $(LIB)
-	
-ang_dist_cmd: ang_dist_cmd.for w.o
-	$(FOR) -o ang_dist_cmd w.o ang_dist_cmd.for $(LIB)
+ang_dist: ang_dist.f w.o dwig3j64.o dwig9j64.o
+	$(FOR) -o ang_dist w.o dwig3j64.o dwig9j64.o ang_dist.f
 
-ang_dist_cmd_manual: ang_dist_cmd_manual.for w.o
-	$(FOR) -o ang_dist_cmd_manual w.o ang_dist_cmd_manual.for $(LIB)
+w.o: w.f
+	$(FOR) -c w.f
 
-w.o: w.for
-	$(FOR) -c w.for
+dwig3j64.o: cernlib/dwig3j64.f
+	$(FOR) -c cernlib/dwig3j64.f
+
+dwig9j64.o: cernlib/dwig9j64.f
+	$(FOR) -c cernlib/dwig9j64.f
 	
 clean:
-	rm ang_dist ang_dist_cmd *.o
+	rm ang_dist *.o

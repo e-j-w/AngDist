@@ -2,25 +2,49 @@
 
 Maintainer: Jonathan Williams
 
-Contributors: K. Starosta, J. Williams
-
-
 ## Description
 
-Calculates the directional distribution for gamma radiation emitted from an axially symmetric oriented source.  In part based on `g77` code by K. Starosta for gamma-gamma angular correlations.
+Calculates the directional distribution for gamma radiation emitted from an axially symmetric oriented source.  In part based on code written for the `g77` compiler by K. Starosta to calculate gamma-gamma angular correlations.
 
-The `ang_dist` code prompts the user to input parameters, while the `ang_dist_cmd` code takes command line aguments as parameters (running the code without arguments displays a list of arguments needed).
+## Build instructions
 
-## Installation
+Use `make` to compile.  To run the program from anywhere, move the resulting `ang_dist` executable to any directory under your `$PATH` environment variable.
 
-Use `make` to compile.  Tested and seems to work with gfortran on Ubuntu 14.04/16.04 and Scientific Linux 6.  Requires `libmathlib` (in the `cernlib` package on Ubuntu 14.04/16.04 and SL6).
-If on SL6, you may need to replace the LIB line in the `Makefile` with:
+This shouldn't depend on any external libraries, just the `gfortran` compiler.  Tested and seems to work on Ubuntu 14.04/16.04, Scientific Linux 6, and CentOS 7.
+
+## Usage
+
+The program can be run using command line argments or using an interactive prompt.  to use the interactive prompt, run the program without any arguments:
 
 ```
-LIB = /usr/lib64/cernlib/2006/lib/libmathlib.so.2_gfortran
+./ang_dist
 ```
 
-On CentOS 7, one must manually install the cernlib package (available at http://download-ib01.fedoraproject.org/pub/epel/6/x86_64/Packages/c/cernlib-2006-35.el6.x86_64.rpm) since it is not available in the official repos.
+Running the program in this way also prints out the syntax used to run the program with command line arguments, which is:
+
+```
+ ./ang_dist I_final I_init L delta sigmaj q2 q4 q6
+```
+
+Only the first 3 argments (I_final, I_init, L) are required - omitting later argments will cause default values to be used instead.  The argument list is described in the following table:
+
+|**Argument**|**Description**|
+|:---:|:---:|
+| I_final | Final spin of the electromagnetic transition. |
+| I_init  | Initial spin of the electromagnetic transition. |
+| L       | Multipolarity (1=dipole, 2=quadrupole, etc.) of the electromagnetic transition. |
+| delta   | Themixing ratio with the L+1 multipole (L+1/L ratio, 0 for no mixing). Default value: 0 |
+| sigmaj  | De-orientation parameter specifying the width of the initial distribution.  Default value: 0 |
+| q2      | Attenuation factor (multiplicative coefficient) for the 2nd order Legendre polynomial term.  Default value: 1 |
+| q4 | Attenuation factor (multiplicative coefficient) for the 4th order Legendre polynomial term.  Default value: 1 |
+| q6 | Attenuation factor (multiplicative coefficient) for the 6th order Legendre polynomial term.  Default value: 1 |
+
+
+## Contributors 
+
+* K. Starosta (original codebase)
+* J. Williams (more features, port to gfortran)
+* This code uses components of the `cernlib` math library, which are provided in the `cernlib` directory of this repo under their original license.
 
 ### Notes from porting the code from `g77` to `gfortran`:
 
