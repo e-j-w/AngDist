@@ -39,6 +39,8 @@ Only the first 3 argments (I_final, I_init, L) are required - omitting later arg
 | q4 | Attenuation factor (multiplicative coefficient) for the 4th order Legendre polynomial term.  Default value: 1 |
 | q6 | Attenuation factor (multiplicative coefficient) for the 6th order Legendre polynomial term.  Default value: 1 |
 
+If all arguments are specified and an extra argument (of any value) is added at the end, this causes the program to run in a mode where only the a0, a2, a4, etc. coefficents are reported, which is useful for interfacing with scripts.
+
 
 ## Contributors 
 

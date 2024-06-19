@@ -18,18 +18,63 @@ c	Declare variables
 	REAL*8 j,order
 	REAL*8 ang
 	
-	INTEGER i,count
+	INTEGER i,count,simpleout
 	CHARACTER(len=15) arg
 	
 	count=iargc()
 	i=0
+	simpleout=0
 
-	WRITE(*,*)''
-	WRITE(*,*)'GAMMA RAY ANGULAR DISTRIBUTION CALCULATOR'
-	WRITE(*,*)'-----------------------------------------'
-	WRITE(*,*)''
+	if(count.ge.8) then
 
-	if(count.gt.0) then
+		simpleout=1
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)I_final
+			i=i+1
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)I_init
+			i=i+1
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)l
+			i=i+1
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)delta
+			i=i+1
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)sigmaj
+			i=i+1
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)q2
+			i=i+1
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)q4
+			i=i+1
+		endif
+		if(i.lt.count) then
+			CALL getarg(i+1, arg)
+			read(arg,*)q6
+			i=i+1
+		endif
+
+	else if(count.gt.0) then
+
+		WRITE(*,*)''
+		WRITE(*,*)'GAMMA RAY ANGULAR DISTRIBUTION CALCULATOR'
+		WRITE(*,*)'-----------------------------------------'
+		WRITE(*,*)''
 
 		WRITE(*,*)'Parsed arguments:'
 		if(i.lt.count) then
@@ -98,9 +143,16 @@ c	Declare variables
 
 	else
 
+		WRITE(*,*)''
+		WRITE(*,*)'GAMMA RAY ANGULAR DISTRIBUTION CALCULATOR'
+		WRITE(*,*)'-----------------------------------------'
+		WRITE(*,*)''
+
 		WRITE(*,*)'Command line usage:'
 		WRITE(*,*)'./ang_dist I_final I_init L delta sigmaj q2 q4 q6'
 		WRITE(*,*)'Required: I_final, I_init, L (later arguments will use default values if omitted)'
+		WRITE(*,*)'Adding an extra argument at the end causes only a0, a2, a4, etc. coefficents'
+		WRITE(*,*)'to be reported, which is useful for interfacing with scripts.'
 		WRITE(*,*)''
 
 		WRITE(*,*)'Initial and final spin'
@@ -139,83 +191,104 @@ c		L'=L+1 (see pg. 542, Hamilton)
 	endif
 c	*from the Wigner 3j terms in eq. 12.150, Hamilton 
 	
-	WRITE(*,*)""
+	if(simpleout.eq.0) then
+		WRITE(*,*)""
 	
-	WRITE(*,*)'Angular distribution coefficient and statistical tensor values:'
+		WRITE(*,*)'Angular distribution coefficient and statistical tensor values:'
 1	FORMAT(" A_{",F10.0,"} = ",F10.6)
 2	FORMAT(" B_{",F10.0,"} = ",F10.6)
 c	Print A and B factors
-	do j=0,lambda,2
-		A_val=A(j,l,I_final,I_init,delta)
-		B_val=B(j,I_init,sigmaj)
-		WRITE(*,1)j,A_val
-		WRITE(*,2)j,B_val
-	end do
-	WRITE(*,*)""
+		do j=0,lambda,2
+			A_val=A(j,l,I_final,I_init,delta)
+			B_val=B(j,I_init,sigmaj)
+			WRITE(*,1)j,A_val
+			WRITE(*,2)j,B_val
+		end do
+		WRITE(*,*)""
 
 c	Report angular distributions	
-	WRITE(*,*)"Angular distribution function"
-	WRITE(*,*)"Angle (deg), value "
-	do i=0,180,5
-		dist_val=0.
-		do j=0,lambda,2
-			order=j
-			ang=i
+		WRITE(*,*)"Angular distribution function"
+		WRITE(*,*)"Angle (deg), value "
+		do i=0,180,5
+			dist_val=0.
+			do j=0,lambda,2
+				order=j
+				ang=i
 c			Need to execute this on its own line rather than a write line 
 c			to avoid recursive write statements (since there are write 
 c			statements in this function)
-			dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
+				dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
 c			dist_val=dist_val+LP(j,cos(i*3.14159265359/180))*B(order,I_init,sigmaj)*A(order,l,I_final,I_init,delta)
+			end do
+			WRITE(*,*)i,dist_val
 		end do
-		WRITE(*,*)i,dist_val
-	end do
-	WRITE(*,*)""
-	
+		WRITE(*,*)""
+		
 c	Report angular distributions for TIGRESS angles
-	WRITE(*,*)"Angular distribution at TIGRESS ring angles"
-	WRITE(*,*)"Angle (deg), value "
-	ang=37.524
-	dist_val=0.
-	do j=0,lambda,2
-		order=j;
-		dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
-	end do
-	WRITE(*,*)ang,dist_val
-	ang=53.678
-	dist_val=0.
-	do j=0,lambda,2
-		order=j;
-		dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
-	end do
-	WRITE(*,*)ang,dist_val
-	ang=81.838
-	dist_val=0.
-	do j=0,lambda,2
-		order=j;
-		dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
-	end do
-	WRITE(*,*)ang,dist_val
-	ang=98.162
-	dist_val=0.
-	do j=0,lambda,2
-		order=j;
-		dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
-	end do
-	WRITE(*,*)ang,dist_val
-	ang=126.322
-	dist_val=0.
-	do j=0,lambda,2
-		order=j;
-		dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
-	end do
-	WRITE(*,*)ang,dist_val
-	ang=142.476
-	dist_val=0.
-	do j=0,lambda,2
-		order=j;
-		dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
-	end do
-	WRITE(*,*)ang,dist_val
+		WRITE(*,*)"Angular distribution at TIGRESS ring angles"
+		WRITE(*,*)"Angle (deg), value "
+		ang=37.524
+		dist_val=0.
+		do j=0,lambda,2
+			order=j;
+			dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
+		end do
+		WRITE(*,*)ang,dist_val
+		ang=53.678
+		dist_val=0.
+		do j=0,lambda,2
+			order=j;
+			dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
+		end do
+		WRITE(*,*)ang,dist_val
+		ang=81.838
+		dist_val=0.
+		do j=0,lambda,2
+			order=j;
+			dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
+		end do
+		WRITE(*,*)ang,dist_val
+		ang=98.162
+		dist_val=0.
+		do j=0,lambda,2
+			order=j;
+			dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
+		end do
+		WRITE(*,*)ang,dist_val
+		ang=126.322
+		dist_val=0.
+		do j=0,lambda,2
+			order=j;
+			dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
+		end do
+		WRITE(*,*)ang,dist_val
+		ang=142.476
+		dist_val=0.
+		do j=0,lambda,2
+			order=j;
+			dist_val=dist_val+DIST(order,l,ang,I_init,I_final,sigmaj,delta,q2,q4,q6)
+		end do
+		WRITE(*,*)ang,dist_val
+
+	else
+c	Print a2, a4, etc.
+		do j=0,lambda,2
+			A_val=A(j,l,I_final,I_init,delta)
+			B_val=B(j,I_init,sigmaj)
+			if(j.eq.2) then
+				WRITE(*,*)q2*A_val*B_val
+			else if(j.eq.4) then
+				WRITE(*,*)q4*A_val*B_val
+			else if(j.eq.6) then
+				WRITE(*,*)q6*A_val*B_val
+			else
+				WRITE(*,*)A_val*B_val
+			endif
+		end do
+		do j=lambda+2,6,2
+			WRITE(*,*)0
+		end do
+	endif
 
 	END
 	
@@ -298,8 +371,14 @@ C	Declare global variables
 	else if(order.eq.6) then
 		LP=(0.0625)*(231.*val**6 - 315.*val**4 + 105.*val**2 - 5.)
 		RETURN
+	else if(order.eq.7) then
+		LP=(0.0625)*(429.*val**7 - 693.*val**5 + 315.*val**3 - 35.*val)
+		RETURN
+	else if(order.eq.8) then
+		LP=(0.0078125)*(6435.*val**8 - 12012.*val**6 + 6930.*val**4 - 1260.*val**2 + 35)
+		RETURN
 	else
-		WRITE(*,*)"Only orders up to 6 are implemented!"
+		WRITE(*,*)"Only orders up to 8 are implemented!"
 	endif
 	
 	
