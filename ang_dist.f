@@ -25,7 +25,7 @@ c	Declare variables
 	i=0
 	simpleout=0
 
-	if(count.ge.8) then
+	if(count.ge.9) then
 
 		simpleout=1
 		if(i.lt.count) then
